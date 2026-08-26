@@ -394,6 +394,12 @@ function B.CanTechUpToFactory(fID)
         return false
     end
 
+    -- Tier-3 gate: no T3 lab until the T2 army is massive. Once the T2
+    -- flood is rolling, keep flooding T2 instead of jumping to T3 too early.
+    if def.techLevel and def.techLevel >= 3 and (st.combatUnitCount or 0) < (cfg.T3_MIN_ARMY or 0) then
+        return false
+    end
+
     local paybackSecs = cfg.ADV_FACTORY_PAYBACK_SECS or 1
     local requiredIncome = cost / paybackSecs
 

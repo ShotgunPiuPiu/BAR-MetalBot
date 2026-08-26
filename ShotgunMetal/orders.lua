@@ -448,6 +448,27 @@ local function ProcessUnitOrders(unitID, frame)
                 end
 
                 if #affordable > 0 then
+                    -- T3 gating: keep production on T2 until a large T2 army
+                    -- is established. Even once T3 is allowed, bias heavily
+                    -- against it to keep the T2 flood going.
+                    local t3Min = cfg.T3_MIN_ARMY or 0
+                    local t3Allowed = (st.combatUnitCount or 0) >= t3Min
+                    local filtered = {}
+                    for i = 1, #affordable do
+                        local ad = UnitDefs[affordable[i]]
+                        local isT3 = ad and (ad.techLevel or 0) >= 3
+                        if not isT3 or t3Allowed then filtered[#filtered + 1] = affordable[i] end
+                    end
+                    if #filtered > 0 then affordable = filtered end
+                    if t3Allowed and #affordable > 0 and math.random() < (cfg.T3_SKIP_CHANCE or 0) then
+                        local without = {}
+                        for i = 1, #affordable do
+                            local ad = UnitDefs[affordable[i]]
+                            if not (ad and (ad.techLevel or 0) >= 3) then without[#without + 1] = affordable[i] end
+                        end
+                        if #without > 0 then affordable = without end
+                    end
+
                     -- air production rule: NO bombers at all until a T3 bomber
                     -- actually becomes available in our build options.
                     -- Fighters (AA-only weapons) and gunships stay allowed.

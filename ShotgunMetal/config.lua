@@ -168,6 +168,12 @@ ADV_CON_MAX              = 5,   -- keep this many T2 constructors alive
     T2_MIN_ARMY              = 20,  -- combat units alive before the first adv lab
     T2_MIN_FACTORIES         = 3,   -- completed labs before the first adv lab
 
+    -- Phase progression: T1 spam → T2 spam → T3 (rare). T3 only enters
+    -- the queue after a massive T2 army is established, and even then only
+    -- a small fraction of production goes to T3 to keep the T2 flow heavy.
+    T3_MIN_ARMY              = 80,  -- combat units required before ANY T3 unit ordered or T3 lab built
+    T3_SKIP_CHANCE           = 0.85,-- when unlocked, chance a T3 unit is skipped in the build queue
+
     AOE_DAMAGE_RADIUS     = 256,
     CLUSTER_THRESHOLD     = 2,
 
@@ -177,7 +183,7 @@ CONS_BASE             = 12,
     PERIMETER_SLOTS       = 24,     -- defensive ring slots around base when enemy is unknown
     HOME_GUARD_MOD        = 4,      -- even after the enemy is found, every N-th combat unit...
     HOME_GUARD_KEEP       = 3,      -- ...(unitID % MOD == KEEP) stays on the perimeter ring as home guard
-    AGGRESSION            = 2,    -- MASTER unit-spam knob: 1 = balanced, higher = flood units hard
+    AGGRESSION            = 2.5,    -- MASTER unit-spam knob: 1 = balanced, higher = flood units hard
                                     -- (fewer constructors, earlier unit rush, cheaper mixes, less support).
                                     -- Lower (<1) = greedy eco. Try 2.0-3.0 for maximum unit spam.
 
