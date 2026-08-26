@@ -1361,6 +1361,37 @@ local function ProcessUnitOrders(unitID, frame)
                 end
             end
 
+            -- Storage overflow: immediately queue a storage building whenever
+            -- a resource exceeds its current capacity buffer.  Cheap T1
+            -- storage goes up right away; once adv constructors exist the
+            -- same path picks T2 storage automatically.
+            if not tx and #cache.storage > 0 and st.myFactoriesCount > 0 then
+                local needStorage = false
+                local pickEnergy = false
+                if st.currentEnergyStorage > 0 and st.currentEnergy > st.currentEnergyStorage * cfg.STORAGE_OVERFLOW_RATIO then
+                    needStorage = true; pickEnergy = true
+                elseif st.currentMetalStorage > 0 and st.currentMetal > st.currentMetalStorage * cfg.STORAGE_OVERFLOW_RATIO then
+                    needStorage = true; pickEnergy = false
+                end
+                if needStorage and B.CanAffordBuild(cache.storage[1], false) then
+                    for i = 1, #cache.storage do
+                        local sid = cache.storage[i]
+                        local sd = UnitDefs[sid]
+                        if sd then
+                            local sdName = sLower(sd.name or "")
+                            local isEnergySt = sFind(sdName, "energy") or (not sFind(sdName, "metal"))
+                            if isEnergySt == pickEnergy then
+                                defID = sid
+                                local sAx, sAz = clampAnchor(ux, uz)
+                                tx, ty, tz, facing, key = B.FindBuildSpot(sAx, sAz, sid, cfg.STORAGE_BUILD_SPACING, unitID, conBuildDist, nil, nil, nil, true)
+                                if tx then claimRadius = cfg.STORAGE_BUILD_SPACING end
+                                break
+                            end
+                        end
+                    end
+                end
+            end
+
             if not tx and st.incompleteFactoryCount > 0 then
                 -- send only a few cons to help build a lab
                 for i = 1, st.incompleteFactoryCount do

@@ -146,7 +146,7 @@ function B.GetBuildCache(uDefID)
     local cached = st.buildCache[uDefID]
     if cached then return cached end
 
-    local c = { factories = {}, mex = {}, energyAdv = {}, energyWind = {}, energySolar = {}, cons = {}, mobile = {}, artillery = {}, defenses = {}, defensesGround = {}, defensesAA = {}, other = {}, conTurrets = {}, shields = {}, antinukes = {}, jammers = {}, radars = {}, radarTowers = {}, laz = {}, trappers = {}, scouts = {} }
+    local c = { factories = {}, mex = {}, energyAdv = {}, energyWind = {}, energySolar = {}, cons = {}, mobile = {}, artillery = {}, defenses = {}, defensesGround = {}, defensesAA = {}, other = {}, conTurrets = {}, shields = {}, antinukes = {}, jammers = {}, radars = {}, radarTowers = {}, laz = {}, trappers = {}, scouts = {}, storage = {} }
     local opts = UnitDefs[uDefID] and UnitDefs[uDefID].buildOptions
 
     if opts then
@@ -229,6 +229,8 @@ function B.GetBuildCache(uDefID)
                     elseif isMex then tInsert(c.mex, bID)
                     elseif isConverter then -- DON'T MAKE CONVERTORS!!
                     elseif isConTurret then tInsert(c.conTurrets, bID)
+                    elseif (not isMobile) and sFind(name, "storage") and not sFind(name, "juno") then
+                        tInsert(c.storage, bID)
                     elseif isEnergy then
                         local isAdvEnergy = (d.metalCost and d.metalCost >= 1000) or sFind(name, "fusion") or sFind(hName, "fusion") or sFind(name, "afus")
                         local isWind = isWindGenDef or sFind(name, "win") or sFind(hName, "wind") or sFind(hName, "turbine")
@@ -260,6 +262,7 @@ function B.GetBuildCache(uDefID)
     tSort(c.defensesGround, SortByMetalCostAsc)
     tSort(c.defensesAA, SortByMetalCostAsc)
     tSort(c.cons, SortByMetalCostAsc)
+    tSort(c.storage, SortByMetalCostAsc)
 
     st.buildCache[uDefID] = c
     return c

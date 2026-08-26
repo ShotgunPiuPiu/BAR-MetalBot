@@ -158,8 +158,10 @@ ADV_CON_MAX              = 5,   -- keep this many T2 constructors alive
 
     ADV_FACTORY_TIER_RATIO  = 2,
 
-    -- We're on metal maps, so hardcoding this probably isn't
-    -- an issue, but who knows
+    -- Moderate storage production: immediately queue one storage building
+    -- whenever a resource overflows its current capacity buffer.
+    STORAGE_OVERFLOW_RATIO = 0.85,  -- trigger when resource > capacity × ratio
+    STORAGE_BUILD_SPACING  = 192,   -- spacing around storage units
 
     ADV_FACTORY_PAYBACK_SECS = 90,
 
