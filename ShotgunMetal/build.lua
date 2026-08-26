@@ -387,6 +387,13 @@ function B.CanTechUpToFactory(fID)
         return true
     end
 
+    -- Hard gate: no advanced lab while the T1 army/factory base is still
+    -- tiny. Early adv labs swallow all metal and lose to plain T1 spam.
+    if (st.combatUnitCount or 0) < (cfg.T2_MIN_ARMY or 0)
+        or (st.myFactoriesCount or 0) < (cfg.T2_MIN_FACTORIES or 0) then
+        return false
+    end
+
     local paybackSecs = cfg.ADV_FACTORY_PAYBACK_SECS or 1
     local requiredIncome = cost / paybackSecs
 

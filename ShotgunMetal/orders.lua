@@ -1513,7 +1513,8 @@ local function ProcessUnitOrders(unitID, frame)
                         + math.floor((st.unease or 0) / turretCost)
                         + math.floor((st.enemyArmyValue or 0) / (turretCost * cfg.DEFENSE_ARMY_TURRET_RATIO))
                     local underPressure = (st.enemyArmyValue or 0) > 500
-                    if (st.defenseGroundCount or 0) < targetGround and (not st.metalStalling or underPressure) and not st.energyStalling then
+                    local stallBypass = underPressure or (st.unease or 0) >= turretCost
+                    if (st.defenseGroundCount or 0) < targetGround and (not st.metalStalling or stallBypass) and (not st.energyStalling or stallBypass) then
                         if B.CanAffordBuild(dID, false) then
                             defID = dID
                         end
@@ -1529,7 +1530,7 @@ local function ProcessUnitOrders(unitID, frame)
                     end
                     local targetAA = cfg.BASE_AA_DEF_TARGET + st.myFactoriesCount * cfg.DEFENSE_MIN_PER_FACTORY + airFacs * cfg.AA_PER_AIR_FACTORY
                         + math.floor((st.enemyArmyValue or 0) / (turretCost * cfg.DEFENSE_ARMY_TURRET_RATIO * 2))
-                    if (st.defenseAACount or 0) < targetAA and (not st.metalStalling or underPressure) and not st.energyStalling then
+                    if (st.defenseAACount or 0) < targetAA and (not st.metalStalling or underPressure) and (not st.energyStalling or underPressure) then
                         if B.CanAffordBuild(dID, false) then
                             defID = dID
                         end
@@ -1539,13 +1540,38 @@ local function ProcessUnitOrders(unitID, frame)
                 if defID then
                     local dAx, dAz = st.baseCenterX, st.baseCenterZ
                     if not dAx then dAx, dAz = buildAnchorX, buildAnchorZ end
-                    local fdx, fdz = facDirX, facDirZ
-                    local fl = math.sqrt(fdx * fdx + fdz * fdz)
-                    if fl < 1 then fdx, fdz = 1, 0 else fdx, fdz = fdx / fl, fdz / fl end
-                    local ang = math.atan2(fdz, fdx) + (math.random() - 0.5) * math.pi * 1.2
+                    local step = cfg.DEF_LINE_STEP * (st.mapLinearScale or 1)
                     local ringR = mMax(250, (st.baseRadius or 0) + 120)
-                    local tAx = dAx + mCos(ang) * ringR
-                    local tAz = dAz + mSin(ang) * ringR
+                    local tAx, tAz
+                    -- Face the nearest scouted enemy base: turrets form a
+                    -- defensive line along the threat axis instead of a
+                    -- random scatter.
+                    local ebx, ebz, ebest = nil, nil, math.huge
+                    for _, b in pairs(st.enemyBases or {}) do
+                        if b.x and b.z then
+                            local bdx, bdz = b.x - dAx, b.z - dAz
+                            local bd = bdx * bdx + bdz * bdz
+                            if bd < ebest then ebest, ebx, ebz = bd, b.x, b.z end
+                        end
+                    end
+                    if ebx then
+                        local fdx2, fdz2 = ebx - dAx, ebz - dAz
+                        local fl2 = math.sqrt(fdx2 * fdx2 + fdz2 * fdz2)
+                        if fl2 > 1 then fdx2, fdz2 = fdx2 / fl2, fdz2 / fl2 else fdx2, fdz2 = 1, 0 end
+                        local k = (st.defLineIndex or 0) % mMax(1, cfg.DEF_LINE_TOWARDS_ENEMY)
+                        st.defLineIndex = (st.defLineIndex or 0) + 1
+                        local r = ringR + k * step
+                        local ang = math.atan2(fdz2, fdx2) + (math.random() - 0.5) * 0.5
+                        tAx = dAx + mCos(ang) * r
+                        tAz = dAz + mSin(ang) * r
+                    else
+                        local fdx, fdz = facDirX, facDirZ
+                        local fl = math.sqrt(fdx * fdx + fdz * fdz)
+                        if fl < 1 then fdx, fdz = 1, 0 else fdx, fdz = fdx / fl, fdz / fl end
+                        local ang = math.atan2(fdz, fdx) + (math.random() - 0.5) * math.pi * 1.2
+                        tAx = dAx + mCos(ang) * ringR
+                        tAz = dAz + mSin(ang) * ringR
+                    end
                     tx, ty, tz, facing, key = B.FindBuildSpot(tAx, tAz, defID, cfg.TURRET_SPACING, unitID, conBuildDist)
                     if tx then claimRadius = cfg.TURRET_SPACING end
                 end
@@ -2578,11 +2604,13 @@ local function ProcessUnitOrders(unitID, frame)
 
             -- Enemy location unknown: man a defensive perimeter ring around
             -- the base instead of wandering into the fog blindly. Each unit
-            -- gets a stable slot on the ring.
+            -- gets a stable slot on the ring. Once the enemy is found, a
+            -- fixed fraction (HOME_GUARD) stays behind as home guard.
             local bcx2, bcz2 = st.baseCenterX, st.baseCenterZ
             local enemyKnown = false
             for _ in pairs(st.enemyBases or {}) do enemyKnown = true break end
-            if bcx2 and not enemyKnown then
+            local homeGuardUnit = ((unitID % cfg.HOME_GUARD_MOD) == (cfg.HOME_GUARD_KEEP % cfg.HOME_GUARD_MOD))
+            if bcx2 and (not enemyKnown or homeGuardUnit) then
                 local mapX2, mapZ2 = Game.mapSizeX or 8192, Game.mapSizeZ or 8192
                 local ringR = mMax(800, ((st.baseRadius or 400) + 400) * (st.mapLinearScale or 1))
                 local slots = cfg.PERIMETER_SLOTS

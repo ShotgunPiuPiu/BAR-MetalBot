@@ -30,6 +30,7 @@ local st = {
     advConCount                  = 0,
     mexUnitCount                 = 0,
     combatUnitCount              = 0,
+    defLineIndex                 = 0,   -- rotating index for turret lines toward the enemy
     myCombatUnits                = {},
     myCombatUnitCount            = 0,
     unclaimedMexCount            = 0,

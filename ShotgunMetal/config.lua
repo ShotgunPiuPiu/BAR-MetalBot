@@ -54,8 +54,8 @@ local cfg = {
     T3_TECH_LEVEL         = 3,      -- bombers stay banned until a bomber of this tech level exists
     AA_PER_AIR_FACTORY    = 2,      -- extra AA towers per own air factory
     AFUS_ROW_COUNT        = 6,      -- once AFUS is affordable, place them 2 wide x N long
-    BASE_GROUND_DEF_TARGET = 2,     -- ground defenses wanted even with zero factories/pressure
-    BASE_AA_DEF_TARGET     = 1,     -- AA defenses wanted even with zero factories/pressure
+    BASE_GROUND_DEF_TARGET = 4,     -- ground defenses wanted even with zero factories/pressure
+    BASE_AA_DEF_TARGET     = 2,     -- AA defenses wanted even with zero factories/pressure
     LAVA_MARGIN           = 12,     -- build/move this far above the lava level
 
     ANTI_NUKE_KEEPOUT      = 160,
@@ -131,8 +131,10 @@ local cfg = {
 
     DEFENSE_TARGET_RADIUS  = 1300,  -- army attacks nearest static defense within this range
 
-    DEFENSE_MIN_PER_FACTORY   = 1,
+    DEFENSE_MIN_PER_FACTORY   = 2,
     DEFENSE_ARMY_TURRET_RATIO = 5,
+    DEF_LINE_TOWARDS_ENEMY = 6,     -- once an enemy base is scouted: extra turrets form a defensive line along the threat axis
+    DEF_LINE_STEP          = 340,   -- elmo spacing between line turrets (scaled by mapLinearScale)
 
     UNIT_PICK_COST_CAP_SECONDS = 90,
     INCOME_WINDOW_BASE         = 30,
@@ -159,7 +161,12 @@ ADV_CON_MAX              = 5,   -- keep this many T2 constructors alive
     -- We're on metal maps, so hardcoding this probably isn't
     -- an issue, but who knows
 
-    ADV_FACTORY_PAYBACK_SECS = 40,
+    ADV_FACTORY_PAYBACK_SECS = 90,
+
+    -- Never tech into an advanced (T2+) lab until BOTH thresholds are met:
+    -- early adv labs eat all the metal and lose to plain T1 spam.
+    T2_MIN_ARMY              = 20,  -- combat units alive before the first adv lab
+    T2_MIN_FACTORIES         = 3,   -- completed labs before the first adv lab
 
     AOE_DAMAGE_RADIUS     = 256,
     CLUSTER_THRESHOLD     = 2,
@@ -167,7 +174,9 @@ ADV_CON_MAX              = 5,   -- keep this many T2 constructors alive
 CONS_PER_FACTORY      = 9,	   -- constructors wanted per lab (fast eco expansion)
 CONS_BASE             = 12,
     ECO_BUILDER_AGGRESSION = 2,     -- multiplier on mex/energy builder budgets (build wider while space lasts)
-    PERIMETER_SLOTS       = 12,     -- defensive ring slots around base when enemy is unknown
+    PERIMETER_SLOTS       = 24,     -- defensive ring slots around base when enemy is unknown
+    HOME_GUARD_MOD        = 4,      -- even after the enemy is found, every N-th combat unit...
+    HOME_GUARD_KEEP       = 3,      -- ...(unitID % MOD == KEEP) stays on the perimeter ring as home guard
     AGGRESSION            = 2,    -- MASTER unit-spam knob: 1 = balanced, higher = flood units hard
                                     -- (fewer constructors, earlier unit rush, cheaper mixes, less support).
                                     -- Lower (<1) = greedy eco. Try 2.0-3.0 for maximum unit spam.
