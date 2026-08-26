@@ -183,9 +183,9 @@ CONS_PER_FACTORY      = 9,	   -- constructors wanted per lab (fast eco expansion
 CONS_BASE             = 12,
     ECO_BUILDER_AGGRESSION = 2,     -- multiplier on mex/energy builder budgets (build wider while space lasts)
     PERIMETER_SLOTS       = 24,     -- defensive ring slots around base when enemy is unknown
-    HOME_GUARD_MOD        = 4,      -- even after the enemy is found, every N-th combat unit...
-    HOME_GUARD_KEEP       = 3,      -- ...(unitID % MOD == KEEP) stays on the perimeter ring as home guard
-    AGGRESSION            = 2.5,    -- MASTER unit-spam knob: 1 = balanced, higher = flood units hard
+    HOME_GUARD_MOD        = 3,      -- even after the enemy is found, every N-th combat unit...
+    HOME_GUARD_KEEP       = 2,      -- ...(unitID % MOD == KEEP) stays on the perimeter ring as home guard
+    AGGRESSION            = 2,    -- MASTER unit-spam knob: 1 = balanced, higher = flood units hard
                                     -- (fewer constructors, earlier unit rush, cheaper mixes, less support).
                                     -- Lower (<1) = greedy eco. Try 2.0-3.0 for maximum unit spam.
 

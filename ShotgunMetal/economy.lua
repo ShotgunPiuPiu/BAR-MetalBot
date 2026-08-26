@@ -433,6 +433,7 @@ function E.UpdateMacroState(myTeam, units)
     st.lazCount, st.jammerCount, st.radarCount = 0, 0, 0
     st.radarTowerCount = 0
     st.ecoEnergyCount = 0
+    st.scoutMaxActive = mMax(2, mMin(5, st.myFactoriesCount * cfg.SCOUTS_PER_FACTORY))
 
     local structPos, structCnt, sumSX, sumSZ = {}, 0, 0, 0
 

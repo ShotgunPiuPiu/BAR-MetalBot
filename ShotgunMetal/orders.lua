@@ -2648,7 +2648,7 @@ local function ProcessUnitOrders(unitID, frame)
                 return
             end
 
-            if (uDef.speed or 0) > cfg.GetScoutSpeedThreshold() and not isTrapperUnit and I.CountActiveScouts(frame) < st.scoutMaxActive then
+            if U.IsScoutDef(uDef) and not isTrapperUnit and I.CountActiveScouts(frame) < st.scoutMaxActive then
                 if I.AssignScoutOrder(unitID, frame) then
                     return
                 end
