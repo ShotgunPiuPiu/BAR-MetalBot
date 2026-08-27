@@ -1493,8 +1493,8 @@ local function ProcessUnitOrders(unitID, frame)
                 local missingFacCost = -1
                 for i = 1, #cache.factories do
                     local fID = cache.factories[i]
-                    if U.IsHoverFactory(fID) then
-                        -- hovers are not useful for this bot: skip them
+                    if U.IsHoverFactory(fID) or (U.IsAirFactory(fID) and (st.combatUnitCount or 0) < cfg.AIR_FACTORY_MIN_ARMY) then
+                        -- hovers not useful; keep ground focus: skip air factories until the army is big enough
                     else
                         local fCost = UnitDefs[fID] and UnitDefs[fID].metalCost or 0
                         local haveIt = false
@@ -1521,7 +1521,7 @@ local function ProcessUnitOrders(unitID, frame)
                     local extraFacCost = -1
                     for i = 1, #cache.factories do
                         local fID = cache.factories[i]
-                        if not U.IsHoverFactory(fID) then
+                        if not U.IsHoverFactory(fID) and not (U.IsAirFactory(fID) and (st.combatUnitCount or 0) < cfg.AIR_FACTORY_MIN_ARMY) then
                             local fCost = UnitDefs[fID] and UnitDefs[fID].metalCost or 0
                             if cfg.CanTechUpToFactory(fID) and fCost > extraFacCost then extraFacID, extraFacCost = fID, fCost end
                         end

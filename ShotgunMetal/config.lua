@@ -177,6 +177,7 @@ ADV_CON_MAX              = 5,   -- keep this many T2 constructors alive
     -- early adv labs eat all the metal and lose to plain T1 spam.
     T2_MIN_ARMY              = 20,  -- combat units alive before the first adv lab
     T2_MIN_FACTORIES         = 3,   -- completed labs before the first adv lab
+    AIR_FACTORY_MIN_ARMY     = 15,  -- don't open air factories until this many ground/combat units exist (keeps ground focus)
 
     -- Phase progression: T1 spam → T2 spam → T3 (rare). T3 only enters
     -- the queue after a massive T2 army is established, and even then only
