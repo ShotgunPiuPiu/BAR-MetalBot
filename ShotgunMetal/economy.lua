@@ -599,8 +599,7 @@ function E.UpdateMacroState(myTeam, units)
             elseif d.isBuilder and (not d.speed or d.speed == 0) then
                 local tx, _, tz = spGetUnitPosition(uID)
                 if tx then
-                    local hk = mFloor(tx) .. "_" .. mFloor(tz)
-                    local homeF = st.conTurretHomes[hk]
+                    local hk = mFloor(tx) .. "_" .. mFloor(tz)                    local homeF = st.conTurretHomes[hk]
                     if homeF then
                         seenHomeKeys[hk] = true
                         st.factoryTurrets[homeF] = (st.factoryTurrets[homeF] or 0) + 1
@@ -619,6 +618,7 @@ function E.UpdateMacroState(myTeam, units)
                 end
             else
                 local name = sLower(d.name or "")
+                if sFind(name, "win") then Spring.Echo(string.format("[ELSE-WIN] f=%d name=%s isB=%s speed=%s em=%s", st.frameNum, name, tostring(d.isBuilder), tostring(d.speed), tostring(d.energyMake))) end
                 local isLaz = d.canResurrect or sFind(name, "lazarus") or sFind(name, "graverobber") or sFind(name, "zagreus")
                 local isJammer = (d.radarDistanceJam and d.radarDistanceJam > 0) or sFind(name, "jammer") or sFind(name, "jam")
                 local isRadar = (d.radarDistance and d.radarDistance > 500 and not (d.weapons and #d.weapons > 0)) or sFind(name, "radar")
@@ -626,7 +626,7 @@ function E.UpdateMacroState(myTeam, units)
                 if d.extractsMetal and d.extractsMetal > 0 then st.mexUnitCount = st.mexUnitCount + 1
                 elseif (d.energyMake and d.energyMake > 0) and not (d.energyUse and d.energyUse > d.energyMake) then
                     st.ecoEnergyCount = st.ecoEnergyCount + 1
-                    if st.frameNum % 300 == 0 then Spring.Echo(string.format("[ECO+1] f=%d name=%s eco=%d", st.frameNum, name, st.ecoEnergyCount)) end
+                    Spring.Echo(string.format("[ECO+1] f=%d name=%s em=%s eco=%d", st.frameNum, name, tostring(d.energyMake), st.ecoEnergyCount))
                 elseif isLaz then st.lazCount = st.lazCount + 1
                 elseif isJammer then
                     st.jammerCount = st.jammerCount + 1
