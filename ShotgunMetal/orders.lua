@@ -1195,7 +1195,7 @@ local function ProcessUnitOrders(unitID, frame)
             -- there are free spots, regardless of saturation, so the economy
             -- develops without interruption. (Only paused while a lab itself
             -- is being built — those cons are on the factory rather than eco.)
-            if not tx and (not E.IsUnitBuildingFactory(unitID)) and (st.myFactoriesCount > 0 or st.pendingFactoryBlueprints > 0)
+            if not tx and (not E.IsUnitBuildingFactory(unitID)) and ((st.myFactoriesCount > 0 or st.pendingFactoryBlueprints > 0) or st.metalStalling or st.energyStalling)
                 and (isAdvCon or U.IsCommander(uDefID) or (st.advConCount or 0) == 0) then
                 Spring.Echo(string.format("[ECO] f=%d isCmd=%s nF=%d pF=%d mex=%d eco=%d needE=%s", frame, tostring(U.IsCommander(uDefID)), st.myFactoriesCount or 0, st.pendingFactoryBlueprints or 0, st.mexUnitCount or 0, st.ecoEnergyCount or 0, tostring(st.energyStalling)))
                 local overflowingEnergy = (st.currentEnergyStorage > 0) and (st.currentEnergy > st.currentEnergyStorage * 0.85)
@@ -1947,34 +1947,30 @@ local function ProcessUnitOrders(unitID, frame)
             end
             if needs then
                 local baseBX, baseBZ = st.baseCenterX, st.baseCenterZ
-                -- Bring all the scouts back during a raid
-                -- The proper solution is for the bot to just use radar,
-                -- but that's easier said then done, which makes this a
-                -- TODO: make the bot understand radar
-                if baseBX and ((st.unease or 0) > 0 or (unitID % 3) == 0) then
-                    local ringR = (st.baseRadius or 400) + (cfg.PERIMETER_PATROL_RING * st.mapLinearScale)
+                -- Patrolling scouts: keep a tight patrol just ahead of the base,
+                -- pushed a bit toward the enemy, instead of scattering around
+                -- the whole perimeter ring.
+                if baseBX then
                     local mapX, mapZ = Game.mapSizeX or 8192, Game.mapSizeZ or 8192
-                    local allyTeam = Spring.GetMyAllyTeamID()
-                    local baseAng = math.atan2(uz - baseBZ, ux - baseBX)
-                    local step = (2 * math.pi) / cfg.PERIMETER_PATROL_PROBES
-                    local px, pz = nil, nil
-                    for pi = 1, cfg.PERIMETER_PATROL_PROBES do
-                        local a = baseAng + pi * step
-                        local qx = mMax(50, mMin(baseBX + mCos(a) * ringR, mapX - 50))
-                        local qz = mMax(50, mMin(baseBZ + mSin(a) * ringR, mapZ - 50))
-                        if not Spring.IsPosInLos(qx, spGetGroundHeight(qx, qz), qz, allyTeam) then
-                            px, pz = qx, qz
-                            break
-                        end
+                    local ringR = (st.baseRadius or 400) + (cfg.PERIMETER_PATROL_RING * st.mapLinearScale)
+                    -- direction to the enemy if known, otherwise the scout's own heading from base
+                    local dirX, dirZ
+                    if st.cachedPrimeTargetPos then
+                        local tx = st.cachedPrimeTargetPos[1]; local tz = st.cachedPrimeTargetPos[3]
+                        local ddx, ddz = tx - baseBX, tz - baseBZ
+                        local dl = (ddx * ddx + ddz * ddz) > 0 and math.sqrt(ddx * ddx + ddz * ddz) or 1
+                        dirX, dirZ = ddx / dl, ddz / dl
+                    else
+                        local ang = math.atan2(uz - baseBZ, ux - baseBX)
+                        dirX, dirZ = math.cos(ang), math.sin(ang)
                     end
-                    if not px then
-                        px = mMax(50, mMin(baseBX + mCos(baseAng + step) * ringR, mapX - 50))
-                        pz = mMax(50, mMin(baseBZ + mSin(baseAng + step) * ringR, mapZ - 50))
-                    end
+                    -- patrol points a bit further ahead than our ring, spread slightly
+                    local offset = ((unitID % 4) - 1.5) * 180
+                    local px = mMax(50, mMin(baseBX + dirX * ringR + (-dirZ) * offset, mapX - 50))
+                    local pz = mMax(50, mMin(baseBZ + dirZ * ringR + (dirX) * offset, mapZ - 50))
                     spGiveOrderToUnit(unitID, cfg.CMD_MOVE, { px, spGetGroundHeight(px, pz), pz }, {})
                 else
                     if not I.AssignScoutOrder(unitID, frame) then
-                        -- push toward the enemy / unknown, don't be idle
                         W.PushFrontier(unitID, ux, uz)
                     end
                 end
