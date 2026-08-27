@@ -1696,25 +1696,10 @@ local function ProcessUnitOrders(unitID, frame)
                 -- rows), so the first lab comes right after — not a wind wall.
                 local noFactoryYet = (st.myFactoriesCount or 0) == 0 and (st.pendingFactoryBlueprints or 0) == 0
                 if noFactoryYet then
-                    local openMex = (st.mexUnitCount or 0) < 1
-                    local openEnergy = (st.ecoEnergyCount or 0) < 4
-                    local cmdMex, cmdMexCost = nil, mHuge
-                    if openMex then
-                        for i = #cache.mex, 1, -1 do
-                            local cost = UnitDefs[cache.mex[i]] and UnitDefs[cache.mex[i]].metalCost or mHuge
-                            if cost < cmdMexCost then cmdMexCost, cmdMex = cost, cache.mex[i] end
-                        end
-                    end
-                    if openMex and cmdMex and st.unclaimedMexCount > 0 and B.CanAffordBuild(cmdMex, true) then
-                        defID = cmdMex
-                        tx, ty, tz, facing, key = B.FindBuildSpot(ux, uz, defID, st.metalMapMexSpacing, unitID, conBuildDist, nil, nil, nil, true)
-                        if tx then
-                            claimRadius = st.metalMapMexSpacing * 0.5
-                            st.activeMexBuilders = st.activeMexBuilders + 1
-                            mexCluster = true
-                        end
-                    end
-                    if not tx and openEnergy then
+                    -- HARD-CODED opening order: 4 wind/solar FIRST, then 1 mex,
+                    -- then (separate factory block weiter oben) the first lab.
+                    -- The commander never builds a mex until the 4 wind are up.
+                    if (st.ecoEnergyCount or 0) < 4 then
                         local cID = (hasWind and #cache.energyWind > 0) and cache.energyWind[1] or (#cache.energySolar > 0 and cache.energySolar[1] or nil)
                         if cID and B.CanAffordBuild(cID, true) then
                             defID = cID
@@ -1726,6 +1711,21 @@ local function ProcessUnitOrders(unitID, frame)
                                 claimRadius = cSpacing * 0.5
                                 st.activeEnergyBuilders = st.activeEnergyBuilders + 1
                                 -- one wind at a time during opening, NO row spam
+                            end
+                        end
+                    elseif (st.mexUnitCount or 0) < 1 then
+                        local cmdMex, cmdMexCost = nil, mHuge
+                        for i = #cache.mex, 1, -1 do
+                            local cost = UnitDefs[cache.mex[i]] and UnitDefs[cache.mex[i]].metalCost or mHuge
+                            if cost < cmdMexCost then cmdMexCost, cmdMex = cost, cache.mex[i] end
+                        end
+                        if cmdMex and st.unclaimedMexCount > 0 and B.CanAffordBuild(cmdMex, true) then
+                            defID = cmdMex
+                            tx, ty, tz, facing, key = B.FindBuildSpot(ux, uz, defID, st.metalMapMexSpacing, unitID, conBuildDist, nil, nil, nil, true)
+                            if tx then
+                                claimRadius = st.metalMapMexSpacing * 0.5
+                                st.activeMexBuilders = st.activeMexBuilders + 1
+                                mexCluster = true
                             end
                         end
                     end
