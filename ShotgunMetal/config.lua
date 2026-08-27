@@ -45,10 +45,10 @@ local cfg = {
     ECO_BLOCK_BUILDINGS   = 8,      -- hard cap of eco buildings per compact block; stop growing a block past this
     ECO_ROW_MIN           = 6,      -- fewer valid cells than this -> flip row direction
     MEX_CLUSTER_RADIUS_SQ = 102400, -- grab extra mex spots within this radius (squared elmos) in one trip (=320^2)
-    MIN_CONS_BEFORE_UNITS = 2,      -- first factory MUST make this many constructors before any units
+    MIN_CONS_BEFORE_UNITS = 3,      -- first factory MUST make this many constructors before any units
     UNIT_RUSH_FRAME       = 4500,   -- (~2.5 min) from here factories prioritize combat units hard
-    CONS_PER_FACTORY_POST = 5,      -- post-opening constructor trickle target per lab
-    CONS_BASE_POST        = 10,     -- ...plus this flat amount (keep a solid eco workforce)
+    CONS_PER_FACTORY_POST = 7,      -- post-opening constructor trickle target per lab
+    CONS_BASE_POST        = 14,     -- ...plus this flat amount (keep a solid eco workforce)
     CONS_ORDER_CHANCE     = 0.85,   -- chance a factory picks a con while below the trickle target
     ROWS_MIN_MEX          = 3,      -- long eco strips need at least this many built mexes...
     ROWS_MIN_WIND         = 10,     -- ...and this many wind/solar buildings before they unlock
@@ -151,8 +151,8 @@ local cfg = {
     -- Tech rush / heavy-unit spam
     MAX_CONCURRENT_FACTORIES = 10,  -- labs under construction or claimed at once
     BIG_UNIT_BIAS            = 0.7, -- chance a factory builds its most expensive affordable unit
-SMALL_UNIT_BIAS          = 0.05, -- before the army threshold: almost only cheap line units
-HEAVY_UNLOCK_ARMY_SIZE   = 60,   -- combat units needed before heavy/support units are allowed
+SMALL_UNIT_BIAS          = 0.6,  -- before the army threshold: mostly cheap line units (mass)
+HEAVY_UNLOCK_ARMY_SIZE   = 40,   -- combat units needed before heavy/support units are allowed
 ADV_CON_MAX              = 5,   -- keep this many T2 constructors alive
 
     ATTACK_SCOUT_DURATION  = 1200,
@@ -188,8 +188,8 @@ ADV_CON_MAX              = 5,   -- keep this many T2 constructors alive
     AOE_DAMAGE_RADIUS     = 256,
     CLUSTER_THRESHOLD     = 2,
 
-CONS_PER_FACTORY      = 9,	   -- constructors wanted per lab (fast eco expansion)
-CONS_BASE             = 12,
+CONS_PER_FACTORY      = 12,	   -- constructors wanted per lab (fast eco expansion)
+CONS_BASE             = 16,
     ECO_BUILDER_AGGRESSION = 3,     -- multiplier on mex/energy builder budgets (build wider while space lasts)
     PERIMETER_SLOTS       = 24,     -- defensive ring slots around base when enemy is unknown
     HOME_GUARD_MOD        = 2,      -- even after the enemy is found, every N-th combat unit...
