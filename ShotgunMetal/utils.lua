@@ -549,6 +549,32 @@ function M.IsVehicleFactory(uDefID)
     return false
 end
 
+local hoverFacCache = {}
+function M.IsHoverFactory(uDefID)
+    if not uDefID then return false end
+    if hoverFacCache[uDefID] ~= nil then return hoverFacCache[uDefID] end
+    local d = UnitDefs[uDefID]
+    if not d or not d.isFactory then hoverFacCache[uDefID] = false return false end
+    local name = d.name and sLower(d.name) or ""
+    local hName = M.GetHumanName(d)
+    -- explicit name hits
+    if sFind(name, "hov") or sFind(name, "hover") or sFind(name, "hplant") or sFind(hName, "hover") or sFind(hName, "hove") then
+        hoverFacCache[uDefID] = true return true
+    end
+    -- hover units are amphibious-ish terrain walkers; check the factory's output
+    if d.buildOptions then
+        for i = 1, #d.buildOptions do
+            local bd = UnitDefs[d.buildOptions[i]]
+            if bd and bd.speed and bd.speed > 0 and not bd.canFly and not d.minWaterDepth then
+                local bmc = bd.modCategories
+                if bmc and bmc.hover then hoverFacCache[uDefID] = true return true end
+            end
+        end
+    end
+    hoverFacCache[uDefID] = false
+    return false
+end
+
 local airFactoryCache = {}
 function M.IsAirFactory(uDefID)
     if not uDefID then return false end

@@ -1202,8 +1202,9 @@ local function ProcessUnitOrders(unitID, frame)
                 end
             end
 
-            if st.myFactoriesCount == 0 and (not E.IsUnitBuildingFactory(unitID)) and #cache.factories > 0 then
-                local starterFactory = B.GetCheapestVehicleFactory(cache) or cache.factories[#cache.factories]
+            if st.myFactoriesCount == 0 and (not E.IsUnitBuildingFactory(unitID)) and #cache.factories > 0
+                and (st.mexUnitCount or 0) >= 1 and (st.ecoEnergyCount or 0) >= 4 then
+                local starterFactory = B.GetCheapestBotFactory(cache) or cache.factories[#cache.factories]
                 if B.CanAffordBuild(starterFactory, true) then
                     defID = starterFactory
                     -- We want to place the first lab within
@@ -1236,6 +1237,20 @@ local function ProcessUnitOrders(unitID, frame)
 
                 local needMetal = (st.metalStalling or st.unclaimedMexCount > 0) and not overflowingMetal
                 local needEnergy = st.energyStalling or ((st.energyIncome < targetEnergy) and not overflowingEnergy)
+
+                -- CRITICAL metal starvation: if our metal income is far below
+                -- our spend rate, building mexes beats everything else.
+                -- We need many mexes before any factory/anything.
+                local criticalMetal = (st.mexUnitCount or 0) < cfg.METAL_CRITICAL_MIN_MEX
+                    or ((st.metalIncome or 0) > 0 and (st.metalPull or 0) > (st.metalIncome or 0) * cfg.METAL_CRITICAL_INCOME_RATIO)
+                if criticalMetal and #cache.mex > 0 and not overflowingMetal then
+                    needMetal = true
+                    if st.activeMexBuilders < (cfg.METAL_CRITICAL_MIN_MEX + 1) then
+                        -- keep every available con on the mexes for now
+                        needEnergy = false
+                    end
+                end
+
                 if not needMetal and not overflowingMetal and (st.metalIncome or 0) < (cfg.METAL_MAP_MEX_INCOME_TARGET * st.mapAreaScale) then
                     needMetal = true
                     mexBudget = mMax(mexBudget, math.ceil(cfg.MEX_GROWTH_FLOOR * st.mapAreaScale))
@@ -1482,13 +1497,17 @@ local function ProcessUnitOrders(unitID, frame)
                 local missingFacCost = -1
                 for i = 1, #cache.factories do
                     local fID = cache.factories[i]
-                    local fCost = UnitDefs[fID] and UnitDefs[fID].metalCost or 0
-                    local haveIt = false
-                    for j = 1, st.myFactoriesCount do if spGetUnitDefID(st.myFactories[j]) == fID then haveIt = true break end end
-                    for _, claim in pairs(st.claimedSpots) do if claim.isFactory and claim.defID == fID then haveIt = true break end end
-                    if not haveIt and fCost > missingFacCost then
-                        missingFacID = fID
-                        missingFacCost = fCost
+                    if U.IsHoverFactory(fID) then
+                        -- hovers are not useful for this bot: skip them
+                    else
+                        local fCost = UnitDefs[fID] and UnitDefs[fID].metalCost or 0
+                        local haveIt = false
+                        for j = 1, st.myFactoriesCount do if spGetUnitDefID(st.myFactories[j]) == fID then haveIt = true break end end
+                        for _, claim in pairs(st.claimedSpots) do if claim.isFactory and claim.defID == fID then haveIt = true break end end
+                        if not haveIt and fCost > missingFacCost then
+                            missingFacID = fID
+                            missingFacCost = fCost
+                        end
                     end
                 end
 
@@ -1506,8 +1525,10 @@ local function ProcessUnitOrders(unitID, frame)
                     local extraFacCost = -1
                     for i = 1, #cache.factories do
                         local fID = cache.factories[i]
-                        local fCost = UnitDefs[fID] and UnitDefs[fID].metalCost or 0
-                        if cfg.CanTechUpToFactory(fID) and fCost > extraFacCost then extraFacID, extraFacCost = fID, fCost end
+                        if not U.IsHoverFactory(fID) then
+                            local fCost = UnitDefs[fID] and UnitDefs[fID].metalCost or 0
+                            if cfg.CanTechUpToFactory(fID) and fCost > extraFacCost then extraFacID, extraFacCost = fID, fCost end
+                        end
                     end
                     if extraFacID then
                         defID = extraFacID

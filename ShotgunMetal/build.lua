@@ -83,10 +83,10 @@ local function SortByMetalCostDesc(a, b)
     return cA > cB
 end
 
-local function SortFactoriesVehicleFirst(a, b)
-    local aVeh = U.IsVehicleFactory(a) and 1 or 0
-    local bVeh = U.IsVehicleFactory(b) and 1 or 0
-    if aVeh ~= bVeh then return aVeh > bVeh end
+local function SortFactoriesBotFirst(a, b)
+    local aBot = (U.IsVehicleFactory(a) or U.IsHoverFactory(a) or U.IsAirFactory(a)) and 0 or 1
+    local bBot = (U.IsVehicleFactory(b) or U.IsHoverFactory(b) or U.IsAirFactory(b)) and 0 or 1
+    if aBot ~= bBot then return aBot > bBot end
     return SortByMetalCostDesc(a, b)
 end
 
@@ -251,7 +251,7 @@ function B.GetBuildCache(uDefID)
         end
     end
 
-    tSort(c.factories, SortFactoriesVehicleFirst)
+    tSort(c.factories, SortFactoriesBotFirst)
     tSort(c.mex, SortByMetalCostDesc)
     tSort(c.energyAdv, SortByMetalCostDesc)
     tSort(c.energyWind, SortByMetalCostDesc)
@@ -272,12 +272,12 @@ end
 -- Factory/mobile-defense pickers over a build cache
 --------------------------------------------------------------------------------
 
-function B.GetCheapestVehicleFactory(cache)
+function B.GetCheapestBotFactory(cache)
     if not cache or not cache.factories then return nil end
     local cheapest, cheapestCost = nil, mHuge
     for i = #cache.factories, 1, -1 do
         local fID = cache.factories[i]
-        if U.IsVehicleFactory(fID) then
+        if not U.IsVehicleFactory(fID) and not U.IsAirFactory(fID) and not U.IsHoverFactory(fID) then
             local cost = UnitDefs[fID] and UnitDefs[fID].metalCost or mHuge
             if cost < cheapestCost then cheapestCost = cost cheapest = fID end
         end

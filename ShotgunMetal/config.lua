@@ -66,6 +66,11 @@ local cfg = {
 
     METAL_MAP_MEX_INCOME_TARGET = 300,
 
+    -- When our metal income is this many times below the pull (spend rate) we
+    -- are critically starved: FORCE constructors onto mexes over anything else.
+    METAL_CRITICAL_INCOME_RATIO = 2.5,
+    METAL_CRITICAL_MIN_MEX     = 2,  -- keep building mexes until we have this many
+
     MEX_GROWTH_FLOOR     = 2,       -- we should have this many mex builders while income < target (x mapAreaScale)
     STALL_PULL_METAL_RATIO  = 0.25, -- stall-pull thresholds are a fraction of our income, not fixed m/s
     STALL_PULL_ENERGY_RATIO = 0.25,
