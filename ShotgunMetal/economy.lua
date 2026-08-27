@@ -251,6 +251,13 @@ function E.IsUnitBuildingFactory(unitID)
     return false
 end
 
+function E.IsUnitBuildingUnit(unitID)
+    local cmds = spGetUnitCommands(unitID, 1)
+    if not cmds or #cmds == 0 then return false end
+    if cmds[1].id < 0 then return true end
+    return false
+end
+
 --------------------------------------------------------------------------------
 -- Strategic plan scoring
 --------------------------------------------------------------------------------
