@@ -1282,7 +1282,9 @@ local function ProcessUnitOrders(unitID, frame)
                         if skipMetal then
                             defID = nil
                         else
-                            tx, ty, tz, facing, key = B.FindBuildSpot(ux, uz, defID, st.metalMapMexSpacing, unitID, conBuildDist, nil, nil, nil, true)
+                            local mDef = UnitDefs[defID]
+                            local mSp = mDef and (mMax(mDef.xsize or 4, mDef.zsize or 4) * 8) or st.metalMapMexSpacing
+                            tx, ty, tz, facing, key = B.FindBuildSpot(ux, uz, defID, mSp, unitID, conBuildDist, nil, nil, nil, true)
                         end
 
                         if not tx and defID then
@@ -1339,7 +1341,7 @@ local function ProcessUnitOrders(unitID, frame)
                     if eID and B.CanAffordBuild(eID, true) then
                         defID = eID
                         local eCost = UnitDefs[eID].metalCost or 0
-                        local eSpacing = (eCost > 4000) and 192 or ((eCost > 800) and 128 or cfg.ENERGY_GRID_SPACING)
+                        local eSpacing = (eCost > 4000) and 192 or ((eCost > 800) and 128 or cfg.OPENING_WIND_SPACING)
                         local eAx, eAz = clampAnchor(ux, uz)
                         tx, ty, tz, facing, key = B.FindBuildSpot(eAx, eAz, defID, eSpacing, unitID, conBuildDist, nil, nil, nil, true)
                         if tx then
@@ -1738,12 +1740,12 @@ local function ProcessUnitOrders(unitID, frame)
                         if cID and B.CanAffordBuild(cID, true) then
                             defID = cID
                             local cCost = UnitDefs[cID].metalCost or 0
-                            local cSpacing = (cCost > 4000) and 192 or cfg.ENERGY_GRID_SPACING
+                            local cSpacing = (cCost > 4000) and 192 or cfg.OPENING_WIND_SPACING
                             local cAx, cAz = clampAnchor(ux, uz)
                             tx, ty, tz, facing, key = B.FindBuildSpot(cAx, cAz, defID, cSpacing, unitID, conBuildDist, nil, nil, nil, true)
-                            if tx then
-                                claimRadius = cSpacing * 0.5
-                                st.activeEnergyBuilders = st.activeEnergyBuilders + 1
+
+                        if tx then
+                            claimRadius = cSpacing * 0.5                                st.activeEnergyBuilders = st.activeEnergyBuilders + 1
                                 rowBuild = true
                             end
                         end
