@@ -1041,6 +1041,9 @@ local function ProcessUnitOrders(unitID, frame)
 
         local emergencyType = ((not E.IsUnitBuildingFactory(unitID))) and E.CheckEmergencyEconomy(unitID) or nil
         if emergencyType then
+            if frame % 15 == 0 then
+                Spring.Echo(string.format("[EMR] f=%d isCmd=%s emType=%s", frame, tostring(U.IsCommander(uDefID)), tostring(emergencyType)))
+            end
             local cache = B.GetBuildCache(uDefID)
             local emergencyDef, eSpacing = nil, cfg.MIN_SPACING
 
@@ -1790,6 +1793,13 @@ local function ProcessUnitOrders(unitID, frame)
                 local isFac = UnitDefs[defID] and UnitDefs[defID].isFactory
                 local isMex = UnitDefs[defID] and UnitDefs[defID].extractsMetal and UnitDefs[defID].extractsMetal > 0
                 local isAntinuke = cfg.IsAntiNukeDef(defID)
+                if frame % 1 == 0 then
+                    local dN = (UnitDefs[defID] and UnitDefs[defID].name) or "?"
+                    local eN = (UnitDefs[emergencyDef] and UnitDefs[emergencyDef].name) or "-"
+                    local tag = "?"
+                    if st.myFactoriesCount == 0 and st.pendingFactoryBlueprints == 0 then tag = "OPEN" end
+                    Spring.Echo(string.format("[BUILD] f=%d isCmd=%s def=%s emType=%s tag=%s row=%s mexCl=%s", frame, tostring(U.IsCommander(uDefID)), dN, tostring(eN), tag, tostring(rowBuild), tostring(mexCluster)))
+                end
                 st.claimedSpots[key] = { frame = frame, x = tx, z = tz, r2 = claimRadius * claimRadius, isFactory = isFac, isAirFactory = isFac and U.IsAirFactory(defID), facing = facing, defID = defID, isMex = isMex, isAntinuke = isAntinuke }
                 st.pendingCommittedMetal = st.pendingCommittedMetal + (UnitDefs[defID] and UnitDefs[defID].metalCost or 0)
                 if isFac then st.pendingFactoryBlueprints = st.pendingFactoryBlueprints + 1 end
