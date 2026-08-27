@@ -42,6 +42,7 @@ local cfg = {
     BUILD_BLOCK_SIZE      = 4,      -- legacy small-block size (still used as safety floor)
     BLOCK_GAP             = 12,     -- elmo gap between buildings inside eco rows/blocks
     ECO_ROW_COUNT         = 4,      -- continuous eco strips: 2 wide x 4 long (8 buildings)
+    ECO_BLOCK_BUILDINGS   = 8,      -- hard cap of eco buildings per compact block; stop growing a block past this
     ECO_ROW_MIN           = 6,      -- fewer valid cells than this -> flip row direction
     MEX_CLUSTER_RADIUS_SQ = 102400, -- grab extra mex spots within this radius (squared elmos) in one trip (=320^2)
     MIN_CONS_BEFORE_UNITS = 2,      -- first factory MUST make this many constructors before any units

@@ -1198,6 +1198,21 @@ local function ProcessUnitOrders(unitID, frame)
             if not tx and (not E.IsUnitBuildingFactory(unitID)) and ((st.myFactoriesCount > 0 or st.pendingFactoryBlueprints > 0) or st.metalStalling or st.energyStalling)
                 and (isAdvCon or U.IsCommander(uDefID) or (st.advConCount or 0) == 0) then
                 Spring.Echo(string.format("[ECO] f=%d isCmd=%s nF=%d pF=%d mex=%d eco=%d needE=%s", frame, tostring(U.IsCommander(uDefID)), st.myFactoriesCount or 0, st.pendingFactoryBlueprints or 0, st.mexUnitCount or 0, st.ecoEnergyCount or 0, tostring(st.energyStalling)))
+                -- hard cap: keep eco as compact 2x4 blocks (<=8 buildings) right at the base instead of a long line
+                local ecoCap = 0
+                local nearUnits = spGetUnitsInCylinder(ux, uz, cfg.ECO_BUILD_RADIUS + 60)
+                if nearUnits then
+                    for ni = 1, #nearUnits do
+                        local nid = nearUnits[ni]
+                        local nd = UnitDefs[spGetUnitDefID(nid)]
+                        if nd and spGetUnitTeam(nid) == spGetMyTeamID() and nd.isBuilding and not nd.isFactory then
+                            ecoCap = ecoCap + 1
+                        end
+                    end
+                end
+                if ecoCap >= cfg.ECO_BLOCK_BUILDINGS then
+                    return
+                end
                 local overflowingEnergy = (st.currentEnergyStorage > 0) and (st.currentEnergy > st.currentEnergyStorage * 0.85)
                 local targetEnergy = mMax(st.energyPull * 1.15, mMin(st.metalIncome * 20, mMax(st.energyPull * 2, 600)), 100)
                 local overflowingMetal = (st.currentMetalStorage > 0) and (st.currentMetal > st.currentMetalStorage * 0.85)
