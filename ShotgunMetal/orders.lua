@@ -1674,7 +1674,7 @@ local function ProcessUnitOrders(unitID, frame)
                         if cID and B.CanAffordBuild(cID, true) then
                             defID = cID
                             local cCost = UnitDefs[cID].metalCost or 0
-                            local cSpacing = (cCost > 4000) and 192 or cfg.ENERGY_GRID_SPACING
+                            local cSpacing = (cCost > 4000) and 192 or cfg.OPENING_WIND_SPACING
                             local cAx, cAz = clampAnchor(ux, uz)
                             tx, ty, tz, facing, key = B.FindBuildSpot(cAx, cAz, defID, cSpacing, unitID, conBuildDist, nil, nil, nil, true)
                             if tx then

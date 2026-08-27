@@ -34,6 +34,7 @@ local cfg = {
 
     BUILD_SPACING         = 384,    -- grid spacing for factory/eco placement
     ENERGY_GRID_SPACING   = 64,
+    OPENING_WIND_SPACING  = 32,     -- opening winds placed right next to each other
     SHIELD_GRID_SPACING   = 256,
     TURRET_SPACING        = 80,
     MIN_SPACING           = 32,     -- I don't think you can build stuff this close, but it (might?) help out performance wise adding this
