@@ -1207,7 +1207,7 @@ local function ProcessUnitOrders(unitID, frame)
 
             if st.myFactoriesCount == 0 and (not E.IsUnitBuildingFactory(unitID)) and #cache.factories > 0
                 and (st.mexUnitCount or 0) >= 1 and (st.ecoEnergyCount or 0) >= 4 then
-                local starterFactory = B.GetCheapestBotFactory(cache) or cache.factories[#cache.factories]
+                local starterFactory = cache.factories[1] or B.GetCheapestBotFactory(cache)
                 if B.CanAffordBuild(starterFactory, true) then
                     defID = starterFactory
                     -- We want to place the first lab within
