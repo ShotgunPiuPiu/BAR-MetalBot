@@ -41,7 +41,7 @@ local cfg = {
     MIN_SPACING           = 32,     -- I don't think you can build stuff this close, but it (might?) help out performance wise adding this
     BUILD_BLOCK_SIZE      = 4,      -- legacy small-block size (still used as safety floor)
     BLOCK_GAP             = 12,     -- elmo gap between buildings inside eco rows/blocks
-    ECO_ROW_COUNT         = 20,     -- continuous eco strips: this many buildings per trip (2 wide x N long)
+    ECO_ROW_COUNT         = 4,      -- continuous eco strips: 2 wide x 4 long (8 buildings)
     ECO_ROW_MIN           = 6,      -- fewer valid cells than this -> flip row direction
     MEX_CLUSTER_RADIUS_SQ = 102400, -- grab extra mex spots within this radius (squared elmos) in one trip (=320^2)
     MIN_CONS_BEFORE_UNITS = 2,      -- first factory MUST make this many constructors before any units

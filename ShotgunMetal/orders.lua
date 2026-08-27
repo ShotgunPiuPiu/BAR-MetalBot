@@ -1804,7 +1804,9 @@ local function ProcessUnitOrders(unitID, frame)
                             end
                             if not bi or bd2 > cfg.MEX_CLUSTER_RADIUS_SQ then break end
                             local spt = table.remove(pool, bi)
-                            local ax, ay, az, af, akey = B.FindBuildSpot(spt.x, spt.z, defID, st.metalMapMexSpacing, unitID, conBuildDist * 0.75, nil, nil, nil, true)
+                            local aDef = UnitDefs[defID]
+                            local aSp = aDef and (mMax(aDef.xsize or 4, aDef.zsize or 4) * 8) or st.metalMapMexSpacing
+                            local ax, ay, az, af, akey = B.FindBuildSpot(spt.x, spt.z, defID, aSp, unitID, conBuildDist * 0.75, nil, nil, nil, true)
                             if ax then
                                 st.claimedSpots[akey] = { frame = frame, x = ax, z = az, r2 = (st.metalMapMexSpacing * 0.5) * (st.metalMapMexSpacing * 0.5), isFactory = false, isAirFactory = false, facing = af, defID = defID, isMex = true }
                                 st.pendingCommittedMetal = st.pendingCommittedMetal + ((UnitDefs[defID] and UnitDefs[defID].metalCost) or 0)
@@ -1823,7 +1825,9 @@ local function ProcessUnitOrders(unitID, frame)
                     if st.activeMexBuilders < fBudget and #cache.mex > 0 then
                         local mexID = cache.mex[#cache.mex]
                         if B.CanAffordBuild(mexID, true) then
-                            local mx, my, mz, mf, mkey = B.FindBuildSpot(ux, uz, mexID, st.metalMapMexSpacing, unitID, conBuildDist, nil, nil, nil, true)
+                            local mDef = UnitDefs[mexID]
+                            local mmSp = mDef and (mMax(mDef.xsize or 4, mDef.zsize or 4) * 8) or st.metalMapMexSpacing
+                            local mx, my, mz, mf, mkey = B.FindBuildSpot(ux, uz, mexID, mmSp, unitID, conBuildDist, nil, nil, nil, true)
                             if mx then
                                 local mDef = UnitDefs[mexID]
                                 st.claimedSpots[mkey] = { frame = frame, x = mx, z = mz, r2 = (st.metalMapMexSpacing * 0.5) * (st.metalMapMexSpacing * 0.5), isFactory = false, isAirFactory = false, facing = mf, defID = mexID, isMex = true }
