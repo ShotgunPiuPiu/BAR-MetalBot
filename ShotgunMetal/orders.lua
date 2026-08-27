@@ -294,8 +294,8 @@ local function ProcessUnitOrders(unitID, frame)
             end
 
             -- cap defenders so the factory doesn't only make fighters
-            local targetDefenders = 4
-            if st.raiderCount > 0 then targetDefenders = mMin(10, mMax(6, st.raiderCount * 2)) end
+            local targetDefenders = 8
+            if st.raiderCount > 0 then targetDefenders = mMin(14, mMax(8, st.raiderCount * 2)) end
 
             -- get our scouts out fast, until we can find a better way to recognize enemy bases
             -- that doesn't force us to make a scout ASAP
@@ -2770,7 +2770,7 @@ local function ProcessUnitOrders(unitID, frame)
             for _ in pairs(st.enemyBases or {}) do enemyKnown = true break end
             if bcx2 and (not enemyKnown or homeGuardUnit) then
                 local mapX2, mapZ2 = Game.mapSizeX or 8192, Game.mapSizeZ or 8192
-                local ringR = mMax(800, mMin((st.baseRadius or 400) + 400, 1600) * (st.mapLinearScale or 1))
+                local ringR = mMax(350, mMin((st.baseRadius or 400) * 0.9, 700) * (st.mapLinearScale or 1))
                 local slots = cfg.PERIMETER_SLOTS
                 local ang = (2 * math.pi) * (((unitID * 7) % slots) / slots) + (unitID % 13) * 0.04
                 local px = mMax(100, mMin(bcx2 + mCos(ang) * ringR, mapX2 - 100))
