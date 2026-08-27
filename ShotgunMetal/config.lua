@@ -47,9 +47,9 @@ local cfg = {
     MEX_CLUSTER_RADIUS_SQ = 102400, -- grab extra mex spots within this radius (squared elmos) in one trip (=320^2)
     MIN_CONS_BEFORE_UNITS = 2,      -- first factory MUST make this many constructors before any units
     UNIT_RUSH_FRAME       = 4500,   -- (~2.5 min) from here factories prioritize combat units hard
-    CONS_PER_FACTORY_POST = 4,      -- post-opening constructor trickle target per lab
-    CONS_BASE_POST        = 7,      -- ...plus this flat amount (keep a solid eco workforce)
-    CONS_ORDER_CHANCE     = 0.7,    -- chance a factory picks a con while below the trickle target
+    CONS_PER_FACTORY_POST = 5,      -- post-opening constructor trickle target per lab
+    CONS_BASE_POST        = 10,     -- ...plus this flat amount (keep a solid eco workforce)
+    CONS_ORDER_CHANCE     = 0.85,   -- chance a factory picks a con while below the trickle target
     ROWS_MIN_MEX          = 3,      -- long eco strips need at least this many built mexes...
     ROWS_MIN_WIND         = 10,     -- ...and this many wind/solar buildings before they unlock
     ARTILLERY_SUPPORT_CHANCE = 0.12, -- post-throttle chance a factory queues artillery as support
@@ -190,7 +190,7 @@ ADV_CON_MAX              = 5,   -- keep this many T2 constructors alive
 
 CONS_PER_FACTORY      = 9,	   -- constructors wanted per lab (fast eco expansion)
 CONS_BASE             = 12,
-    ECO_BUILDER_AGGRESSION = 2,     -- multiplier on mex/energy builder budgets (build wider while space lasts)
+    ECO_BUILDER_AGGRESSION = 3,     -- multiplier on mex/energy builder budgets (build wider while space lasts)
     PERIMETER_SLOTS       = 24,     -- defensive ring slots around base when enemy is unknown
     HOME_GUARD_MOD        = 2,      -- even after the enemy is found, every N-th combat unit...
     HOME_GUARD_KEEP       = 1,      -- ...(unitID % MOD == KEEP) stays on the perimeter ring as home guard

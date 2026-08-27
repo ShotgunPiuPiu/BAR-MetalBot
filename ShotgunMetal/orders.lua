@@ -1475,7 +1475,7 @@ local function ProcessUnitOrders(unitID, frame)
 
                 -- Somehow we do 1 factory per 5 income, and yet we're still overflowing
                 local availableMetal = mMax(0, st.currentMetal - st.pendingCommittedMetal)
-                local supportableFactories = math.floor(st.metalIncome / 5)
+                local supportableFactories = math.floor(st.metalIncome / 3)
                 local canExpand = st.economySaturated
                     or (st.myFactoriesCount < supportableFactories and not st.metalStalling)
                     or (st.metalIncome >= 20 and not st.metalStalling)
@@ -1489,12 +1489,19 @@ local function ProcessUnitOrders(unitID, frame)
 
                 -- Tech rush: build the MOST EXPENSIVE lab we're allowed to tech
                 -- into first (that's the T2/adv factory), then fill in cheaper types.
+                -- Air factories are capped: at most half the number of ground factories.
+                local airFacCount, groundFacCount = 0, 0
+                for fi = 1, st.myFactoriesCount do
+                    if U.IsAirFactory(spGetUnitDefID(st.myFactories[fi])) then airFacCount = airFacCount + 1
+                    else groundFacCount = groundFacCount + 1 end
+                end
+                local maxAir = math.floor(groundFacCount / 2)
                 local missingFacID = nil
                 local missingFacCost = -1
                 for i = 1, #cache.factories do
                     local fID = cache.factories[i]
-                    if U.IsHoverFactory(fID) or (U.IsAirFactory(fID) and (st.combatUnitCount or 0) < cfg.AIR_FACTORY_MIN_ARMY) then
-                        -- hovers not useful; keep ground focus: skip air factories until the army is big enough
+                    if U.IsHoverFactory(fID) or (U.IsAirFactory(fID) and airFacCount >= maxAir) then
+                        -- hovers not useful; keep air at or below half the ground factories
                     else
                         local fCost = UnitDefs[fID] and UnitDefs[fID].metalCost or 0
                         local haveIt = false
@@ -1521,7 +1528,7 @@ local function ProcessUnitOrders(unitID, frame)
                     local extraFacCost = -1
                     for i = 1, #cache.factories do
                         local fID = cache.factories[i]
-                        if not U.IsHoverFactory(fID) and not (U.IsAirFactory(fID) and (st.combatUnitCount or 0) < cfg.AIR_FACTORY_MIN_ARMY) then
+                        if not U.IsHoverFactory(fID) and not (U.IsAirFactory(fID) and airFacCount >= maxAir) then
                             local fCost = UnitDefs[fID] and UnitDefs[fID].metalCost or 0
                             if cfg.CanTechUpToFactory(fID) and fCost > extraFacCost then extraFacID, extraFacCost = fID, fCost end
                         end
