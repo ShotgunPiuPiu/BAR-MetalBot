@@ -190,6 +190,7 @@ CONS_BASE             = 12,
     PERIMETER_SLOTS       = 24,     -- defensive ring slots around base when enemy is unknown
     HOME_GUARD_MOD        = 3,      -- even after the enemy is found, every N-th combat unit...
     HOME_GUARD_KEEP       = 2,      -- ...(unitID % MOD == KEEP) stays on the perimeter ring as home guard
+    HOME_GUARD_RANGE      = 7,      -- x baseRadius: defenders never chase targets farther than this from base
     AGGRESSION            = 2,    -- MASTER unit-spam knob: 1 = balanced, higher = flood units hard
                                     -- (fewer constructors, earlier unit rush, cheaper mixes, less support).
                                     -- Lower (<1) = greedy eco. Try 2.0-3.0 for maximum unit spam.

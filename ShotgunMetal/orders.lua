@@ -2658,12 +2658,24 @@ local function ProcessUnitOrders(unitID, frame)
             st.combatReaimFrame[unitID] = frame
             st.frameNum = frame
 
+            local homeGuardUnit = ((unitID % cfg.HOME_GUARD_MOD) == (cfg.HOME_GUARD_KEEP % cfg.HOME_GUARD_MOD))
+            local hgR2 = (cfg.HOME_GUARD_RANGE * (st.baseRadius or 400) * (st.mapLinearScale or 1)) * (cfg.HOME_GUARD_RANGE * (st.baseRadius or 400) * (st.mapLinearScale or 1))
+
             local tgtX, tgtY, tgtZ = st.army.targetX, st.army.targetY, st.army.targetZ
             local cx, cy, cz, bestID, clusterSize, bestMetal, isGround =
                 W.FindBestClusterTarget(ux, uz, 1600, cfg.AOE_DAMAGE_RADIUS, uDefID)
             if not cx and tgtX then
                 cx, cy, cz, bestID, clusterSize, bestMetal, isGround =
                     W.FindBestClusterTarget(tgtX, tgtZ, 1500, cfg.AOE_DAMAGE_RADIUS, uDefID)
+            end
+            -- Home guard never chases far from base: ignore targets that are
+            -- beyond the base guard radius, so defenders stay close by.
+            if homeGuardUnit and cx and not isArty then
+                local bcx3, bcz3 = st.baseCenterX, st.baseCenterZ
+                if bcx3 then
+                    local gdx, gdz = cx - bcx3, cz - bcz3
+                    if gdx * gdx + gdz * gdz > hgR2 then cx, cy, cz, bestID = nil, nil, nil, nil end
+                end
             end
 
             if cx then
@@ -2692,6 +2704,18 @@ local function ProcessUnitOrders(unitID, frame)
             end
 
             if st.army.state == "attacking" and tgtX then
+                -- Home guard: only engage if the army target is within the
+                -- base guard radius; otherwise stay guarding the base.
+                if homeGuardUnit then
+                    local bcx4, bcz4 = st.baseCenterX, st.baseCenterZ
+                    if bcx4 then
+                        local adx4, adz4 = tgtX - bcx4, tgtZ - bcz4
+                        if adx4 * adx4 + adz4 * adz4 > hgR2 then
+                            W.GiveSpreadMove(unitID, ux, uz, ux, uz, cfg.ANTI_CLUMP_MIN, cfg.ANTI_CLUMP_MAX)
+                            return
+                        end
+                    end
+                end
                 local ddx, ddz = tgtX - ux, tgtZ - uz
                 if ddx*ddx + ddz*ddz < 400 * 400 then
                     local myTeamID = spGetMyTeamID()
@@ -2735,10 +2759,9 @@ local function ProcessUnitOrders(unitID, frame)
             local bcx2, bcz2 = st.baseCenterX, st.baseCenterZ
             local enemyKnown = false
             for _ in pairs(st.enemyBases or {}) do enemyKnown = true break end
-            local homeGuardUnit = ((unitID % cfg.HOME_GUARD_MOD) == (cfg.HOME_GUARD_KEEP % cfg.HOME_GUARD_MOD))
             if bcx2 and (not enemyKnown or homeGuardUnit) then
                 local mapX2, mapZ2 = Game.mapSizeX or 8192, Game.mapSizeZ or 8192
-                local ringR = mMax(800, ((st.baseRadius or 400) + 400) * (st.mapLinearScale or 1))
+                local ringR = mMax(800, mMin((st.baseRadius or 400) + 400, 1600) * (st.mapLinearScale or 1))
                 local slots = cfg.PERIMETER_SLOTS
                 local ang = (2 * math.pi) * (((unitID * 7) % slots) / slots) + (unitID % 13) * 0.04
                 local px = mMax(100, mMin(bcx2 + mCos(ang) * ringR, mapX2 - 100))
