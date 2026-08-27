@@ -618,15 +618,14 @@ function E.UpdateMacroState(myTeam, units)
                 end
             else
                 local name = sLower(d.name or "")
-                if sFind(name, "win") then Spring.Echo(string.format("[ELSE-WIN] f=%d name=%s isB=%s speed=%s em=%s", st.frameNum, name, tostring(d.isBuilder), tostring(d.speed), tostring(d.energyMake))) end
                 local isLaz = d.canResurrect or sFind(name, "lazarus") or sFind(name, "graverobber") or sFind(name, "zagreus")
                 local isJammer = (d.radarDistanceJam and d.radarDistanceJam > 0) or sFind(name, "jammer") or sFind(name, "jam")
                 local isRadar = (d.radarDistance and d.radarDistance > 500 and not (d.weapons and #d.weapons > 0)) or sFind(name, "radar")
 
                 if d.extractsMetal and d.extractsMetal > 0 then st.mexUnitCount = st.mexUnitCount + 1
-                elseif (d.energyMake and d.energyMake > 0) and not (d.energyUse and d.energyUse > d.energyMake) then
+                elseif ((d.energyMake and d.energyMake > 0) or (d.windGenerator and (d.windGenerator == true or d.windGenerator > 0))) and not (d.energyUse and d.energyUse > (d.energyMake or 0)) then
                     st.ecoEnergyCount = st.ecoEnergyCount + 1
-                    Spring.Echo(string.format("[ECO+1] f=%d name=%s em=%s eco=%d", st.frameNum, name, tostring(d.energyMake), st.ecoEnergyCount))
+                    Spring.Echo(string.format("[ECO+1] f=%d name=%s em=%s wg=%s eco=%d", st.frameNum, name, tostring(d.energyMake), tostring(d.windGenerator), st.ecoEnergyCount))
                 elseif isLaz then st.lazCount = st.lazCount + 1
                 elseif isJammer then
                     st.jammerCount = st.jammerCount + 1
