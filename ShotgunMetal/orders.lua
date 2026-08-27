@@ -1039,7 +1039,8 @@ local function ProcessUnitOrders(unitID, frame)
             return
         end
 
-        local emergencyType = ((not E.IsUnitBuildingFactory(unitID))) and E.CheckEmergencyEconomy(unitID) or nil
+        local noFactoryYet = (st.myFactoriesCount or 0) == 0 and (st.pendingFactoryBlueprints or 0) == 0
+        local emergencyType = (not noFactoryYet and (not E.IsUnitBuildingFactory(unitID))) and E.CheckEmergencyEconomy(unitID) or nil
         if emergencyType then
             if frame % 15 == 0 then
                 Spring.Echo(string.format("[EMR] f=%d isCmd=%s emType=%s", frame, tostring(U.IsCommander(uDefID)), tostring(emergencyType)))
