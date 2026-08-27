@@ -624,7 +624,7 @@ function E.UpdateMacroState(myTeam, units)
                 local isRadar = (d.radarDistance and d.radarDistance > 500 and not (d.weapons and #d.weapons > 0)) or sFind(name, "radar")
 
                 if d.extractsMetal and d.extractsMetal > 0 then st.mexUnitCount = st.mexUnitCount + 1
-                elseif sFind(name, "wind") or sFind(name, "turbine") or sFind(name, "solar") or sFind(name, "fusion") or sFind(name, "geo") then
+                elseif sFind(name, "wind") or sFind(name, "turbine") or sFind(name, "win") or sFind(name, "solar") or sFind(name, "fusion") or sFind(name, "geo") then
                     st.ecoEnergyCount = st.ecoEnergyCount + 1
                     if st.frameNum % 300 == 0 then Spring.Echo(string.format("[ECO+1] f=%d name=%s eco=%d", st.frameNum, name, st.ecoEnergyCount)) end
                 elseif isLaz then st.lazCount = st.lazCount + 1
