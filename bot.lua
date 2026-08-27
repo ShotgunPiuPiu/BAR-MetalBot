@@ -435,7 +435,7 @@ function widget:GameFrame(frame)
 
     -- print for diagnostics
     if frame % 900 == 0 then
-        local fmt = "[ShotgunMetal] state=%s target=(%s,%s) base=(%s,%s) combat=%d scouts=%d cons=%d facs=%d enemyRaiders=%d enemyBases=%d pendingMex=%d metal=%d/s energy=%d/s(pull=%d stor=%d) stall=%s%s unease=%d load=%.2fms/%.1fx agg=%.1f"
+        local fmt = "[ShotgunMetal] state=%s target=(%s,%s) base=(%s,%s) combat=%d scouts=%d cons=%d facs=%d enemyRaiders=%d enemyBases=%d pendingMex=%d pF=%d metal=%d/s energy=%d/s(pull=%d stor=%d) stall=%s%s unease=%d load=%.2fms/%.1fx agg=%.1f"
         local tx, tz = st.army.targetX or -1, st.army.targetZ or -1
         local bx, bz = st.baseCenterX or -1, st.baseCenterZ or -1
         Spring.Echo(string.format(fmt,
@@ -444,6 +444,7 @@ function widget:GameFrame(frame)
             st.myFactoriesCount or 0, st.raiderCount or 0,
             st.enemyBases and next(st.enemyBases) ~= nil and 1 or 0,
             st.unclaimedMexCount or 0,
+            st.pendingFactoryBlueprints or 0,
             mFloor(st.metalIncome or 0),
             mFloor(st.energyIncome or 0), mFloor(st.energyPull or 0), mFloor(st.currentEnergyStorage or 0),
             (st.metalStalling and "M" or ""), (st.energyStalling and "E" or ""),
