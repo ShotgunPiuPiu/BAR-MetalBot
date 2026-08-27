@@ -410,6 +410,13 @@ function E.UpdateMacroState(myTeam, units)
         end
     end
 
+    -- compact per-minute log of resources and counts
+    if st.frameNum % 1800 == 0 then
+        local _, mCur2, mStor2, mPull2, mInc2 = pcall(spGetTeamResources, myTeam, "metal")
+        local _, eCur2, eStor2, ePull2, eInc2 = pcall(spGetTeamResources, myTeam, "energy")
+        Spring.Echo(string.format("[MIN] f=%d metal=%.1f(+%.1f|%d) energy=%.1f(+%.1f|%d) units=%d cons=%d mex=%d eco=%d fac=%d", st.frameNum, mInc2 or 0, mPull2 or 0, mCur2 or 0, eInc2 or 0, ePull2 or 0, eCur2 or 0, #(units or {}), st.conUnitCount or 0, st.mexUnitCount or 0, st.ecoEnergyCount or 0, st.myFactoriesCount or 0))
+    end
+
     local okM, mCur, mStorage, mPull, mIncome = pcall(spGetTeamResources, myTeam, "metal")
     if okM then
         st.metalStalling = E.IsResourceStalling(mCur, mPull, mIncome)
@@ -625,7 +632,6 @@ function E.UpdateMacroState(myTeam, units)
                 if d.extractsMetal and d.extractsMetal > 0 then st.mexUnitCount = st.mexUnitCount + 1
                 elseif ((d.energyMake and d.energyMake > 0) or (d.windGenerator and (d.windGenerator == true or d.windGenerator > 0))) and not (d.energyUse and d.energyUse > (d.energyMake or 0)) then
                     st.ecoEnergyCount = st.ecoEnergyCount + 1
-                    Spring.Echo(string.format("[ECO+1] f=%d name=%s em=%s wg=%s eco=%d", st.frameNum, name, tostring(d.energyMake), tostring(d.windGenerator), st.ecoEnergyCount))
                 elseif isLaz then st.lazCount = st.lazCount + 1
                 elseif isJammer then
                     st.jammerCount = st.jammerCount + 1
@@ -657,16 +663,6 @@ function E.UpdateMacroState(myTeam, units)
                 end
             end
         end
-    end
-
-    if st.frameNum % 30 == 0 then
-        Spring.Echo(string.format("[SCAN] f=%d units=%d cons=%d mex=%d eco=%d fac=%d", st.frameNum, #(units or {}), st.conUnitCount or 0, st.mexUnitCount or 0, st.ecoEnergyCount or 0, st.myFactoriesCount or 0))
-        local names = {}
-        for i = 1, #(units or {}) do
-            local du = UnitDefs[spGetUnitDefID(units[i])]
-            if du then names[#names + 1] = (du.name or "?") .. (du.isBuilder and "[]" or "") end
-        end
-        Spring.Echo("    [SCAN-UNIT] " .. table.concat(names, " "))
     end
 
     for hk in pairs(st.conTurretHomes) do

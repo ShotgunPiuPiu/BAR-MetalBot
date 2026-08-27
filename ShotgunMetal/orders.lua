@@ -1153,21 +1153,14 @@ local function ProcessUnitOrders(unitID, frame)
             if isNearBase then
                 local reclaimTarget = W.FindReclaimTarget(ux, uz, true, conBuildDist)
                 if reclaimTarget and (st.metalStalling or math.random() < 0.25) then
-                    Spring.Echo(string.format("[RCL] f=%d isCmd=%s reclaim=%s metalStall=%s", frame, tostring(U.IsCommander(uDefID)), tostring(reclaimTarget), tostring(st.metalStalling)))
                     spGiveOrderToUnit(unitID, cfg.CMD_RECLAIM, { reclaimTarget + (Game and Game.maxUnits or 32768) }, {}) return
                 end
             end
 
-            if st.myFactoriesCount == 0 then
-                Spring.Echo(string.format("[LAB-chk] f=%d isCmd=%s nF=%d pF=%d mex=%d eco=%d opW=%d opM=%d facOpt=%d", frame, tostring(U.IsCommander(uDefID)), st.myFactoriesCount or 0, st.pendingFactoryBlueprints or 0, st.mexUnitCount or 0, st.ecoEnergyCount or 0, st.openingWind or 0, st.openingMex or 0, #(cache.factories or {})))
-            end
             if st.myFactoriesCount == 0 and (not E.IsUnitBuildingFactory(unitID)) and #cache.factories > 0
                 and (st.mexUnitCount or 0) >= 4 and (st.ecoEnergyCount or 0) >= 4 then
                 local starterFactory = cache.factories[1] or B.GetCheapestBotFactory(cache)
                 local affordF = B.CanAffordBuild(starterFactory, true)
-                if not affordF then
-                    Spring.Echo(string.format("[LAB-FAC] f=%d canAfford=%s", frame, tostring(affordF)))
-                end
                 if affordF then
                     defID = starterFactory
                     -- We want to place the first lab within
@@ -1182,12 +1175,9 @@ local function ProcessUnitOrders(unitID, frame)
                         st.pendingCommittedMetal = st.pendingCommittedMetal + (UnitDefs[defID] and UnitDefs[defID].metalCost or 0)
                         st.pendingFactoryBlueprints = st.pendingFactoryBlueprints + 1
                         spGiveOrderToUnit(unitID, -defID, { tx, ty, tz, facing }, {})
-                        Spring.Echo(string.format("[LAB-PLACE] f=%d def=%s", frame, tostring(UnitDefs[defID] and UnitDefs[defID].name)))
                     else
-                        Spring.Echo(string.format("[LAB-NOSPOT] f=%d def=%s", frame, tostring(UnitDefs[defID] and UnitDefs[defID].name)))
                     end
                 else
-                    Spring.Echo(string.format("[LAB-AFFORD] f=%d canAffordF=%s", frame, tostring(affordF)))
                 end
             end
 
@@ -1197,7 +1187,6 @@ local function ProcessUnitOrders(unitID, frame)
             -- is being built — those cons are on the factory rather than eco.)
             if not tx and (not E.IsUnitBuildingFactory(unitID)) and ((st.myFactoriesCount > 0 or st.pendingFactoryBlueprints > 0) or st.metalStalling or st.energyStalling)
                 and (isAdvCon or U.IsCommander(uDefID) or (st.advConCount or 0) == 0) then
-                Spring.Echo(string.format("[ECO] f=%d isCmd=%s nF=%d pF=%d mex=%d eco=%d needE=%s", frame, tostring(U.IsCommander(uDefID)), st.myFactoriesCount or 0, st.pendingFactoryBlueprints or 0, st.mexUnitCount or 0, st.ecoEnergyCount or 0, tostring(st.energyStalling)))
                 -- hard cap: keep eco as compact 2x4 blocks (<=8 buildings) right at the base instead of a long line
                 local ecoCap = 0
                 local nearUnits = spGetUnitsInCylinder(ux, uz, cfg.ECO_BUILD_RADIUS + 60)
@@ -1685,7 +1674,6 @@ local function ProcessUnitOrders(unitID, frame)
                 -- rows), so the first lab comes right after — not a wind wall.
                 local noFactoryYet = (st.myFactoriesCount or 0) == 0 and (st.pendingFactoryBlueprints or 0) == 0
                 if noFactoryYet then
-                    Spring.Echo(string.format("[OPEN] f=%d isCmd=%s opW=%d opM=%d mex=%d eco=%d windcnt=%d solar=%d unclaimedMex=%d", frame, tostring(U.IsCommander(uDefID)), st.openingWind or 0, st.openingMex or 0, st.mexUnitCount or 0, st.ecoEnergyCount or 0, #(cache.energyWind or {}), #(cache.energySolar or {}), st.unclaimedMexCount or 0))
                     -- HARD-CODED opening FSM on persistent counters: the
                     -- commander orders 4 winds, then 4 mexes, THEN the factory
                     -- gate above takes over. Counters only grow as we actually
@@ -1693,7 +1681,6 @@ local function ProcessUnitOrders(unitID, frame)
                     -- or let winds accumulate.
                     if (st.openingWind or 0) < 4 then
                         local cID = (hasWind and #cache.energyWind > 0) and cache.energyWind[1] or (#cache.energySolar > 0 and cache.energySolar[1] or nil)
-                        Spring.Echo(string.format("[OPEN-W] f=%d cID=%s afford=%s", frame, tostring(cID), tostring(cID and B.CanAffordBuild(cID, true))))
                         if cID and B.CanAffordBuild(cID, true) then
                             defID = cID
                             local cCost = UnitDefs[cID].metalCost or 0
@@ -1705,7 +1692,6 @@ local function ProcessUnitOrders(unitID, frame)
                                 st.activeEnergyBuilders = st.activeEnergyBuilders + 1
                                 st.openingWind = (st.openingWind or 0) + 1
                             else
-                                Spring.Echo(string.format("[OPEN-W-nospot] f=%d", frame))
                             end
                         end
                     elseif (st.openingMex or 0) < 4 then
@@ -1715,7 +1701,6 @@ local function ProcessUnitOrders(unitID, frame)
                             if cost < cmdMexCost then cmdMexCost, cmdMex = cost, cache.mex[i] end
                         end
                         local affordM = cmdMex and B.CanAffordBuild(cmdMex, true)
-                        Spring.Echo(string.format("[OPEN-M] f=%d cmdMex=%s cost=%s unclaimed=%d afford=%s", frame, tostring(cmdMex), tostring(cmdMexCost), st.unclaimedMexCount or 0, tostring(affordM)))
                         if cmdMex and st.unclaimedMexCount > 0 and affordM then
                             defID = cmdMex
                             tx, ty, tz, facing, key = B.FindBuildSpot(ux, uz, defID, st.metalMapMexSpacing, unitID, conBuildDist, nil, nil, nil, true)
@@ -1725,7 +1710,6 @@ local function ProcessUnitOrders(unitID, frame)
                                 st.openingMex = (st.openingMex or 0) + 1
                                 mexCluster = true
                             else
-                                Spring.Echo(string.format("[OPEN-M-nospot] f=%d", frame))
                             end
                         end
                     end
@@ -1754,7 +1738,6 @@ local function ProcessUnitOrders(unitID, frame)
                                 st.postLabMex = (st.postLabMex or 0) + 1
                                 mexCluster = true
                             else
-                                Spring.Echo(string.format("[OPEN-M-nospot2] f=%d", frame))
                             end
                         end
                     end
@@ -1839,13 +1822,6 @@ local function ProcessUnitOrders(unitID, frame)
                 local isFac = UnitDefs[defID] and UnitDefs[defID].isFactory
                 local isMex = UnitDefs[defID] and UnitDefs[defID].extractsMetal and UnitDefs[defID].extractsMetal > 0
                 local isAntinuke = cfg.IsAntiNukeDef(defID)
-                if frame % 1 == 0 then
-                    local dN = (UnitDefs[defID] and UnitDefs[defID].name) or "?"
-                    local eN = "-"
-                    local tag = "?"
-                    if st.myFactoriesCount == 0 and st.pendingFactoryBlueprints == 0 then tag = "OPEN" end
-                    Spring.Echo(string.format("[BUILD] f=%d isCmd=%s def=%s emType=%s tag=%s row=%s mexCl=%s", frame, tostring(U.IsCommander(uDefID)), dN, tostring(eN), tag, tostring(rowBuild), tostring(mexCluster)))
-                end
                 st.claimedSpots[key] = { frame = frame, x = tx, z = tz, r2 = claimRadius * claimRadius, isFactory = isFac, isAirFactory = isFac and U.IsAirFactory(defID), facing = facing, defID = defID, isMex = isMex, isAntinuke = isAntinuke }
                 st.pendingCommittedMetal = st.pendingCommittedMetal + (UnitDefs[defID] and UnitDefs[defID].metalCost or 0)
                 if isFac then st.pendingFactoryBlueprints = st.pendingFactoryBlueprints + 1 end
@@ -1947,7 +1923,6 @@ local function ProcessUnitOrders(unitID, frame)
                             -- a ready own building wedged right on the exit blocks the queue
                             local exitBlock = W.FindExitBlockingBuilding(fx, fz, facDirX, facDirZ, unitID)
                             if exitBlock then
-                                Spring.Echo(string.format("[EXIT-RECLAIM] f=%d isCmd=%s blk=%s", frame, tostring(U.IsCommander(uDefID)), tostring(UnitDefs[spGetUnitDefID(exitBlock)] and UnitDefs[spGetUnitDefID(exitBlock)].name or exitBlock)))
                                 spGiveOrderToUnit(unitID, CMD_STOP, {}, {})
                                 spGiveOrderToUnit(unitID, cfg.CMD_RECLAIM, { exitBlock + (Game and Game.maxUnits or 32768) }, {})
                                 return
