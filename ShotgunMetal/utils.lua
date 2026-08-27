@@ -575,6 +575,19 @@ function M.IsHoverFactory(uDefID)
     return false
 end
 
+-- Commander detection. Note: UnitDef.isCommander is deprecated in BAR, so we
+-- detect the commander via custom params / name instead.
+function M.IsCommander(uDefID)
+    if not uDefID then return false end
+    local d = UnitDefs[uDefID]
+    if not d then return false end
+    local cp = d.customParams
+    if cp and (cp.iscommander ~= nil or cp.is_commander ~= nil) then return true end
+    local name = d.name and sLower(d.name) or ""
+    if sFind(name, "commander") then return true end
+    return false
+end
+
 local airFactoryCache = {}
 function M.IsAirFactory(uDefID)
     if not uDefID then return false end

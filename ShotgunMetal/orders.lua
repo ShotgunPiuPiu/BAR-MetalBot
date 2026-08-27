@@ -1231,7 +1231,7 @@ local function ProcessUnitOrders(unitID, frame)
             -- develops without interruption. (Only paused while a lab itself
             -- is being built — those cons are on the factory rather than eco.)
             if not tx and (not E.IsUnitBuildingFactory(unitID)) and (st.myFactoriesCount > 0 or st.pendingFactoryBlueprints > 0)
-                and (isAdvCon or uDef.isCommander or (st.advConCount or 0) == 0) then
+                and (isAdvCon or U.IsCommander(uDefID) or (st.advConCount or 0) == 0) then
                 local overflowingEnergy = (st.currentEnergyStorage > 0) and (st.currentEnergy > st.currentEnergyStorage * 0.85)
                 local targetEnergy = mMax(st.energyPull * 1.15, mMin(st.metalIncome * 20, mMax(st.energyPull * 2, 600)), 100)
                 local overflowingMetal = (st.currentMetalStorage > 0) and (st.currentMetal > st.currentMetalStorage * 0.85)
@@ -1690,7 +1690,7 @@ local function ProcessUnitOrders(unitID, frame)
 
             -- Commander must never idle: keep chaining mex/wind even when the
             -- macro budgets above are satisfied (start-of-game uptime matters).
-            if not tx and uDef.isCommander and not E.IsUnitBuildingFactory(unitID) then
+            if not tx and U.IsCommander(uDefID) and not E.IsUnitBuildingFactory(unitID) then
                 local cmdMex, cmdMexCost = nil, mHuge
                 for i = #cache.mex, 1, -1 do
                     local cost = UnitDefs[cache.mex[i]] and UnitDefs[cache.mex[i]].metalCost or mHuge
