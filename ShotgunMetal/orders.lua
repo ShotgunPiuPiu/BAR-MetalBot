@@ -1862,6 +1862,14 @@ local function ProcessUnitOrders(unitID, frame)
                                 spGiveOrderToUnit(unitID, cfg.CMD_RECLAIM, { exitWreck + (Game.maxUnits or 32768) }, {})
                                 return
                             end
+                            -- a ready own building wedged right on the exit blocks the queue
+                            local exitBlock = W.FindExitBlockingBuilding(fx, fz, facDirX, facDirZ, unitID)
+                            if exitBlock then
+                                Spring.Echo(string.format("[EXIT-RECLAIM] f=%d isCmd=%s blk=%s", frame, tostring(U.IsCommander(uDefID)), tostring(UnitDefs[spGetUnitDefID(exitBlock)] and UnitDefs[spGetUnitDefID(exitBlock)].name or exitBlock)))
+                                spGiveOrderToUnit(unitID, CMD_STOP, {}, {})
+                                spGiveOrderToUnit(unitID, cfg.CMD_RECLAIM, { exitBlock + (Game and Game.maxUnits or 32768) }, {})
+                                return
+                            end
                         end
                     end
                 end

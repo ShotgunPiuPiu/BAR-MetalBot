@@ -84,6 +84,32 @@ function W.FindReclaimTarget(ux, uz, isStalling, radiusOverride)
     return bestID, bestX, bestZ
 end
 
+function W.FindExitBlockingBuilding(fx, fz, dirX, dirZ, excludeID)
+    local myTeam = spGetMyTeamID()
+    local nearby = spGetUnitsInCylinder(fx, fz, 520)
+    if not nearby then return nil end
+    local bestID, bestDist = nil, mHuge
+    for i = 1, #nearby do
+        local nID = nearby[i]
+        if nID ~= excludeID and spGetUnitTeam(nID) == myTeam and Spring.GetUnitIsStunned(nID) == false then
+            local ux, _, uz = spGetUnitPosition(nID)
+            if ux then
+                local dx, dz = ux - fx, uz - fz
+                local proj = dx * (dirX or 0) + dz * (dirZ or 0)
+                if proj > 150 and proj < 400 then
+                    local dist = math.sqrt(dx * dx + dz * dz)
+                    if dist < bestDist then
+                        local nd = UnitDefs[spGetUnitDefID(nID)]
+                        local isStructure = nd and nd.isBuilding and not nd.isFactory and not (nd.isBuilder and (not nd.speed or nd.speed == 0))
+                        if isStructure then bestDist, bestID = dist, nID end
+                    end
+                end
+            end
+        end
+    end
+    return bestID
+end
+
 function W.FindResurrectTarget(ux, uz, radius)
     local feats = spGetFeaturesInCylinder(ux, uz, radius)
     if not feats then return nil end
