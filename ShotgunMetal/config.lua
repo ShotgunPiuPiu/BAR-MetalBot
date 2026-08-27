@@ -151,7 +151,7 @@ local cfg = {
     -- Tech rush / heavy-unit spam
     MAX_CONCURRENT_FACTORIES = 10,  -- labs under construction or claimed at once
     BIG_UNIT_BIAS            = 0.7, -- chance a factory builds its most expensive affordable unit
-SMALL_UNIT_BIAS          = 0.6,  -- before the army threshold: mostly cheap line units (mass)
+SMALL_UNIT_BIAS          = 0.8,  -- before the army threshold: mostly cheap line units (mass)
 HEAVY_UNLOCK_ARMY_SIZE   = 40,   -- combat units needed before heavy/support units are allowed
 ADV_CON_MAX              = 5,   -- keep this many T2 constructors alive
 

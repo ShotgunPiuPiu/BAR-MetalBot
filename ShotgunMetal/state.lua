@@ -22,6 +22,8 @@ local st = {
     pendingFactoryBlueprints     = 0,
     openingWind                  = 0,   -- hard open counter: winds ordered by the commander
     openingMex                   = 0,   -- hard open counter: mexes ordered during the opening
+    postLabWind                  = 0,   -- mixed post-lab eco row: winds already ordered
+    postLabMex                   = 0,   -- mixed post-lab eco row: mexes already ordered
     factoriesNeedingTurrets      = {},
     factoriesNeedingTurretsCount = 0,
 

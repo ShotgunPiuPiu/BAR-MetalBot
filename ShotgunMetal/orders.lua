@@ -1162,7 +1162,7 @@ local function ProcessUnitOrders(unitID, frame)
                 Spring.Echo(string.format("[LAB-chk] f=%d isCmd=%s nF=%d pF=%d mex=%d eco=%d opW=%d opM=%d facOpt=%d", frame, tostring(U.IsCommander(uDefID)), st.myFactoriesCount or 0, st.pendingFactoryBlueprints or 0, st.mexUnitCount or 0, st.ecoEnergyCount or 0, st.openingWind or 0, st.openingMex or 0, #(cache.factories or {})))
             end
             if st.myFactoriesCount == 0 and (not E.IsUnitBuildingFactory(unitID)) and #cache.factories > 0
-                and (st.mexUnitCount or 0) >= 1 and (st.ecoEnergyCount or 0) >= 4 then
+                and (st.mexUnitCount or 0) >= 4 and (st.ecoEnergyCount or 0) >= 4 then
                 local starterFactory = cache.factories[1] or B.GetCheapestBotFactory(cache)
                 local affordF = B.CanAffordBuild(starterFactory, true)
                 if not affordF then
@@ -1210,8 +1210,12 @@ local function ProcessUnitOrders(unitID, frame)
                         end
                     end
                 end
+                local ecoBlockFull = false
                 if ecoCap >= cfg.ECO_BLOCK_BUILDINGS then
-                    return
+                    -- block is full: don't stack MORE wind/solar right here, but
+                    -- keep this con working — fall through so it still claims free
+                    -- mex spots / other eco instead of idling at the base.
+                    ecoBlockFull = true
                 end
                 local overflowingEnergy = (st.currentEnergyStorage > 0) and (st.currentEnergy > st.currentEnergyStorage * 0.85)
                 local targetEnergy = mMax(st.energyPull * 1.15, mMin(st.metalIncome * 20, mMax(st.energyPull * 2, 600)), 100)
@@ -1231,6 +1235,7 @@ local function ProcessUnitOrders(unitID, frame)
 
                 local needMetal = (st.metalStalling or st.unclaimedMexCount > 0) and not overflowingMetal
                 local needEnergy = st.energyStalling or ((st.energyIncome < targetEnergy) and not overflowingEnergy)
+                if ecoBlockFull then needEnergy = false end
 
                 -- CRITICAL metal starvation: if our metal income is far below
                 -- our spend rate, building mexes beats everything else.
@@ -1287,16 +1292,9 @@ local function ProcessUnitOrders(unitID, frame)
 
                         if chosenMex then
                             defID = chosenMex
-                            local nearestMex, mexDistSq = E.GetNearestUnclaimedMetalSpot(ux, uz)
 
-                        local skipMetal = false
-                        if nearestMex and mexDistSq > (cfg.MEX_SKIP_DIST * st.mapLinearScale) * (cfg.MEX_SKIP_DIST * st.mapLinearScale) and st.conUnitCount > 1 then
-                            if not st.metalStalling or (st.metalStalling and st.activeMexBuilders >= 2) then skipMetal = true end
-                        end
-
-                        if skipMetal then
-                            defID = nil
-                        else
+                            -- always let a con build a mex (no skip): workers
+                            -- keep building instead of idling over long distance
                             local mDef = UnitDefs[defID]
                             local mSp = mDef and (mMax(mDef.xsize or 4, mDef.zsize or 4) * 8) or st.metalMapMexSpacing
                             tx, ty, tz, facing, key = B.FindBuildSpot(ux, uz, defID, mSp, unitID, cfg.ECO_BUILD_RADIUS, nil, nil, nil, true)
@@ -1319,7 +1317,6 @@ local function ProcessUnitOrders(unitID, frame)
                             st.activeMexBuilders = st.activeMexBuilders + 1
                             mexCluster = true
                         end
-                    end
                 end
 
                 if not tx and needEnergy then
@@ -1490,12 +1487,14 @@ local function ProcessUnitOrders(unitID, frame)
                 -- Tech rush: build the MOST EXPENSIVE lab we're allowed to tech
                 -- into first (that's the T2/adv factory), then fill in cheaper types.
                 -- Air factories are capped: at most half the number of ground factories.
+                -- Air factories are disabled (commented out): no air units.
+                -- Air is capped at zero so every IsAirFactory check below skips it.
                 local airFacCount, groundFacCount = 0, 0
                 for fi = 1, st.myFactoriesCount do
                     if U.IsAirFactory(spGetUnitDefID(st.myFactories[fi])) then airFacCount = airFacCount + 1
                     else groundFacCount = groundFacCount + 1 end
                 end
-                local maxAir = math.floor(groundFacCount / 2)
+                local maxAir = 0
                 local missingFacID = nil
                 local missingFacCost = -1
                 for i = 1, #cache.factories do
@@ -1688,10 +1687,10 @@ local function ProcessUnitOrders(unitID, frame)
                 if noFactoryYet then
                     Spring.Echo(string.format("[OPEN] f=%d isCmd=%s opW=%d opM=%d mex=%d eco=%d windcnt=%d solar=%d unclaimedMex=%d", frame, tostring(U.IsCommander(uDefID)), st.openingWind or 0, st.openingMex or 0, st.mexUnitCount or 0, st.ecoEnergyCount or 0, #(cache.energyWind or {}), #(cache.energySolar or {}), st.unclaimedMexCount or 0))
                     -- HARD-CODED opening FSM on persistent counters: the
-                    -- commander orders at most 4 winds, then at most 1 mex,
-                    -- THEN the factory gate above takes over. Counters only
-                    -- grow as we actually issue orders, so they can never
-                    -- re-trigger the same stage or let winds accumulate.
+                    -- commander orders 4 winds, then 4 mexes, THEN the factory
+                    -- gate above takes over. Counters only grow as we actually
+                    -- issue orders, so they can never re-trigger the same stage
+                    -- or let winds accumulate.
                     if (st.openingWind or 0) < 4 then
                         local cID = (hasWind and #cache.energyWind > 0) and cache.energyWind[1] or (#cache.energySolar > 0 and cache.energySolar[1] or nil)
                         Spring.Echo(string.format("[OPEN-W] f=%d cID=%s afford=%s", frame, tostring(cID), tostring(cID and B.CanAffordBuild(cID, true))))
@@ -1709,7 +1708,7 @@ local function ProcessUnitOrders(unitID, frame)
                                 Spring.Echo(string.format("[OPEN-W-nospot] f=%d", frame))
                             end
                         end
-                    elseif (st.openingMex or 0) < 1 then
+                    elseif (st.openingMex or 0) < 4 then
                         local cmdMex, cmdMexCost = nil, mHuge
                         for i = #cache.mex, 1, -1 do
                             local cost = UnitDefs[cache.mex[i]] and UnitDefs[cache.mex[i]].metalCost or mHuge
@@ -1731,12 +1730,14 @@ local function ProcessUnitOrders(unitID, frame)
                         end
                     end
                 else
-                    -- Post-first-factory eco rush: alternate a compact 2x4 row
-                    -- (up to 4 wind + up to 4 mex), one at a time, so BOTH resource
-                    -- incomes come online fast instead of a long line of one type.
-                    local windWant = (st.openingWind or 0) < 4
-                    local mexWant = (st.openingMex or 0) < 4
-                    local wantMex = mexWant and ((st.openingWind or 0) <= (st.openingMex or 0))
+                    -- Post-first-factory mixed eco row: alternate 4 wind + 4 mex
+                    -- (4 wind then 4 mex, one at a time), so BOTH resource
+                    -- incomes come online fast. This mixed row only runs at the
+                    -- start; later eco growth falls through to the block below.
+                    local windWant = (st.postLabWind or 0) < 4
+                    local mexWant = (st.postLabMex or 0) < 4
+                    -- start with wind, then alternate wind/mex
+                    local wantMex = mexWant and ((st.postLabWind or 0) > (st.postLabMex or 0))
                     local wantWind = windWant and not wantMex
                     if wantMex then
                         local cmdMex, cmdMexCost = nil, mHuge
@@ -1750,7 +1751,7 @@ local function ProcessUnitOrders(unitID, frame)
                             if tx then
                                 claimRadius = st.metalMapMexSpacing * 0.5
                                 st.activeMexBuilders = st.activeMexBuilders + 1
-                                st.openingMex = (st.openingMex or 0) + 1
+                                st.postLabMex = (st.postLabMex or 0) + 1
                                 mexCluster = true
                             else
                                 Spring.Echo(string.format("[OPEN-M-nospot2] f=%d", frame))
@@ -1780,36 +1781,54 @@ local function ProcessUnitOrders(unitID, frame)
                             if tx then
                                 claimRadius = cSpacing * 0.5
                                 st.activeEnergyBuilders = st.activeEnergyBuilders + 1
-                                st.openingWind = (st.openingWind or 0) + 1
+                                st.postLabWind = (st.postLabWind or 0) + 1
                                 rowBuild = true
                             end
                         end
                     end
-                    -- after the 2x4 row is done, commander falls back to advanced energy
+                    -- after the 2x4 row the commander keeps growing the economy
+                    -- all game (never idles): claim free mex spots, then add energy.
                     if not tx and not windWant and not mexWant then
-                        local cID = nil
-                        for i = 1, #cache.energyAdv do
-                            local aN = UnitDefs[cache.energyAdv[i]] and sLower(UnitDefs[cache.energyAdv[i]].name or "") or ""
-                            if sFind(aN, "fusion") or sFind(aN, "afus") then
-                                if st.afusLocked or B.CanAffordBuild(cache.energyAdv[i], false) then
-                                    cID = cache.energyAdv[i]
-                                    afusRow = true
-                                    st.afusLocked = true
-                                end
-                                break
+                        local cmdMex, cmdMexCost = nil, mHuge
+                        for i = #cache.mex, 1, -1 do
+                            local cost = UnitDefs[cache.mex[i]] and UnitDefs[cache.mex[i]].metalCost or mHuge
+                            if cost < cmdMexCost then cmdMexCost, cmdMex = cost, cache.mex[i] end
+                        end
+                        local needMex = cmdMex and (st.unclaimedMexCount or 0) > 0 and B.CanAffordBuild(cmdMex, true)
+                        if needMex then
+                            defID = cmdMex
+                            tx, ty, tz, facing, key = B.FindBuildSpot(ux, uz, defID, st.metalMapMexSpacing, unitID, conBuildDist, nil, nil, nil, true)
+                            if tx then
+                                claimRadius = st.metalMapMexSpacing * 0.5
+                                st.activeMexBuilders = st.activeMexBuilders + 1
+                                mexCluster = true
                             end
                         end
-                        if not cID and not st.afusLocked then cID = (hasWind and #cache.energyWind > 0) and cache.energyWind[1] or (#cache.energySolar > 0 and cache.energySolar[1] or nil) end
-                        if cID and B.CanAffordBuild(cID, true) then
-                            defID = cID
-                            local cCost = UnitDefs[cID].metalCost or 0
-                            local cSpacing = (cCost > 4000) and 192 or cfg.OPENING_WIND_SPACING
-                            local cAx, cAz = clampAnchor(ux, uz)
-                            tx, ty, tz, facing, key = B.FindBuildSpot(cAx, cAz, defID, cSpacing, unitID, conBuildDist, nil, nil, nil, true)
-                            if tx then
-                                claimRadius = cSpacing * 0.5
-                                st.activeEnergyBuilders = st.activeEnergyBuilders + 1
-                                rowBuild = true
+                        if not tx then
+                            local cID = nil
+                            for i = 1, #cache.energyAdv do
+                                local aN = UnitDefs[cache.energyAdv[i]] and sLower(UnitDefs[cache.energyAdv[i]].name or "") or ""
+                                if sFind(aN, "fusion") or sFind(aN, "afus") then
+                                    if st.afusLocked or B.CanAffordBuild(cache.energyAdv[i], false) then
+                                        cID = cache.energyAdv[i]
+                                        afusRow = true
+                                        st.afusLocked = true
+                                    end
+                                    break
+                                end
+                            end
+                            if not cID and not st.afusLocked then cID = (hasWind and #cache.energyWind > 0) and cache.energyWind[1] or (#cache.energySolar > 0 and cache.energySolar[1] or nil) end
+                            if cID and B.CanAffordBuild(cID, true) then
+                                defID = cID
+                                local cCost = UnitDefs[cID].metalCost or 0
+                                local cSpacing = (cCost > 4000) and 192 or cfg.OPENING_WIND_SPACING
+                                local cAx, cAz = clampAnchor(ux, uz)
+                                tx, ty, tz, facing, key = B.FindBuildSpot(cAx, cAz, defID, cSpacing, unitID, conBuildDist, nil, nil, nil, true)
+                                if tx then
+                                    claimRadius = cSpacing * 0.5
+                                    st.activeEnergyBuilders = st.activeEnergyBuilders + 1
+                                    rowBuild = true
+                                end
                             end
                         end
                     end

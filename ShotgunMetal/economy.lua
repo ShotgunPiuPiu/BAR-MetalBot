@@ -673,11 +673,18 @@ function E.UpdateMacroState(myTeam, units)
         if not seenHomeKeys[hk] then st.conTurretHomes[hk] = nil end
     end
 
+    -- Turret budget by game time: 2 in the first 3 minutes, then +1 per minute.
+    -- Prevents con turrets from eating metal early and stalling growth.
+    local turretCap = 2 + mMax(0, math.floor(((st.frameNum or 0) / (60 * 30)) - 3))
+    local totalTurrets = 0
+    for fi = 1, st.myFactoriesCount do
+        totalTurrets = totalTurrets + (st.factoryTurrets[st.myFactories[fi]] or 0)
+    end
     for j = 1, st.myFactoriesCount do
         local fID = st.myFactories[j]
         local hp, maxHp = spGetUnitHealth(fID)
         -- ring the lab from 50% construction up
-        if hp and maxHp and hp >= maxHp * 0.5 and (st.factoryTurrets[fID] or 0) < (U.FactoryTurretInfo(spGetUnitDefID(fID))) then
+        if totalTurrets < turretCap and hp and maxHp and hp >= maxHp * 0.5 and (st.factoryTurrets[fID] or 0) < (U.FactoryTurretInfo(spGetUnitDefID(fID))) then
             st.factoriesNeedingTurretsCount = st.factoriesNeedingTurretsCount + 1
             st.factoriesNeedingTurrets[st.factoriesNeedingTurretsCount] = fID
         end
