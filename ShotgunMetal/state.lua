@@ -20,6 +20,8 @@ local st = {
     incompleteFactoryCount       = 0,
     combatReaimFrame             = {},
     pendingFactoryBlueprints     = 0,
+    openingWind                  = 0,   -- hard open counter: winds ordered by the commander
+    openingMex                   = 0,   -- hard open counter: mexes ordered during the opening
     factoriesNeedingTurrets      = {},
     factoriesNeedingTurretsCount = 0,
 

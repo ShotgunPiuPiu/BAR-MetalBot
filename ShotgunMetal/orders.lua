@@ -1696,13 +1696,12 @@ local function ProcessUnitOrders(unitID, frame)
                 -- rows), so the first lab comes right after — not a wind wall.
                 local noFactoryYet = (st.myFactoriesCount or 0) == 0 and (st.pendingFactoryBlueprints or 0) == 0
                 if noFactoryYet then
-                    -- HARD-CODED opening FSM: 4 wind/solar FIRST, then 1 mex,
-                    -- then (separate factory gate above) the first lab. Counts
-                    -- BOTH already-built AND already-queued builds from the
-                    -- commander's command queue, so no accumulation or overlap.
-                    local openingEnergy = (st.ecoEnergyCount or 0) + E.CountQueuedBuilds(unitID, "energy")
-                    local openingMex = (st.mexUnitCount or 0) + E.CountQueuedBuilds(unitID, "mex")
-                    if openingEnergy < 4 then
+                    -- HARD-CODED opening FSM on persistent counters: the
+                    -- commander orders at most 4 winds, then at most 1 mex,
+                    -- THEN the factory gate above takes over. Counters only
+                    -- grow as we actually issue orders, so they can never
+                    -- re-trigger the same stage or let winds accumulate.
+                    if (st.openingWind or 0) < 4 then
                         local cID = (hasWind and #cache.energyWind > 0) and cache.energyWind[1] or (#cache.energySolar > 0 and cache.energySolar[1] or nil)
                         if cID and B.CanAffordBuild(cID, true) then
                             defID = cID
@@ -1713,10 +1712,10 @@ local function ProcessUnitOrders(unitID, frame)
                             if tx then
                                 claimRadius = cSpacing * 0.5
                                 st.activeEnergyBuilders = st.activeEnergyBuilders + 1
-                                -- one wind at a time during opening, NO row spam
+                                st.openingWind = (st.openingWind or 0) + 1
                             end
                         end
-                    elseif openingMex < 1 then
+                    elseif (st.openingMex or 0) < 1 then
                         local cmdMex, cmdMexCost = nil, mHuge
                         for i = #cache.mex, 1, -1 do
                             local cost = UnitDefs[cache.mex[i]] and UnitDefs[cache.mex[i]].metalCost or mHuge
@@ -1728,6 +1727,7 @@ local function ProcessUnitOrders(unitID, frame)
                             if tx then
                                 claimRadius = st.metalMapMexSpacing * 0.5
                                 st.activeMexBuilders = st.activeMexBuilders + 1
+                                st.openingMex = (st.openingMex or 0) + 1
                                 mexCluster = true
                             end
                         end
