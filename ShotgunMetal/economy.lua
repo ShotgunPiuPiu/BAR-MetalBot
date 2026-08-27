@@ -258,6 +258,30 @@ function E.IsUnitBuildingUnit(unitID)
     return false
 end
 
+-- Count queued BUILD commands (id < 0) in a unit's whole command queue,
+-- filtered by kind: "energy" (wind/solar), "mex", "factory".
+function E.CountQueuedBuilds(unitID, kind)
+    local cmds = spGetUnitCommands(unitID, -1)
+    if not cmds then return 0 end
+    local n = 0
+    for i = 1, #cmds do
+        local c = cmds[i]
+        if c.id < 0 then
+            local d = UnitDefs[-c.id]
+            if d then
+                local name = d.name or ""
+                local isFac = d.isFactory
+                if kind == "factory" and isFac then n = n + 1
+                elseif kind == "mex" and (d.extractsMetal and d.extractsMetal > 0) and not isFac then n = n + 1
+                elseif kind == "energy" and not isFac and not (d.extractsMetal and d.extractsMetal > 0)
+                    and (sFind(name, "wind") or sFind(name, "turbine") or sFind(name, "solar") or sFind(name, "fusion") or sFind(name, "geo")) then n = n + 1
+                end
+            end
+        end
+    end
+    return n
+end
+
 --------------------------------------------------------------------------------
 -- Strategic plan scoring
 --------------------------------------------------------------------------------

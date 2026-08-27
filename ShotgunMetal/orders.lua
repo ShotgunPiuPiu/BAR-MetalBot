@@ -1696,36 +1696,33 @@ local function ProcessUnitOrders(unitID, frame)
                 -- rows), so the first lab comes right after — not a wind wall.
                 local noFactoryYet = (st.myFactoriesCount or 0) == 0 and (st.pendingFactoryBlueprints or 0) == 0
                 if noFactoryYet then
-                    -- HARD-CODED opening order: 4 wind/solar FIRST, then 1 mex,
-                    -- then (separate factory block weiter oben) the first lab.
-                    -- The commander never builds a mex until the 4 wind are up.
-                    if (st.ecoEnergyCount or 0) < 4 then
-                        local busy = E.IsUnitBuildingUnit(unitID)
-                        if not busy then
-                            local cID = (hasWind and #cache.energyWind > 0) and cache.energyWind[1] or (#cache.energySolar > 0 and cache.energySolar[1] or nil)
-                            if cID and B.CanAffordBuild(cID, true) then
-                                defID = cID
-                                local cCost = UnitDefs[cID].metalCost or 0
-                                local cSpacing = (cCost > 4000) and 192 or cfg.ENERGY_GRID_SPACING
-                                local cAx, cAz = clampAnchor(ux, uz)
-                                tx, ty, tz, facing, key = B.FindBuildSpot(cAx, cAz, defID, cSpacing, unitID, conBuildDist, nil, nil, nil, true)
-                                if tx then
-                                    claimRadius = cSpacing * 0.5
-                                    st.activeEnergyBuilders = st.activeEnergyBuilders + 1
-                                    -- one wind at a time during opening, NO row spam
-                                end
+                    -- HARD-CODED opening FSM: 4 wind/solar FIRST, then 1 mex,
+                    -- then (separate factory gate above) the first lab. Counts
+                    -- BOTH already-built AND already-queued builds from the
+                    -- commander's command queue, so no accumulation or overlap.
+                    local openingEnergy = (st.ecoEnergyCount or 0) + E.CountQueuedBuilds(unitID, "energy")
+                    local openingMex = (st.mexUnitCount or 0) + E.CountQueuedBuilds(unitID, "mex")
+                    if openingEnergy < 4 then
+                        local cID = (hasWind and #cache.energyWind > 0) and cache.energyWind[1] or (#cache.energySolar > 0 and cache.energySolar[1] or nil)
+                        if cID and B.CanAffordBuild(cID, true) then
+                            defID = cID
+                            local cCost = UnitDefs[cID].metalCost or 0
+                            local cSpacing = (cCost > 4000) and 192 or cfg.ENERGY_GRID_SPACING
+                            local cAx, cAz = clampAnchor(ux, uz)
+                            tx, ty, tz, facing, key = B.FindBuildSpot(cAx, cAz, defID, cSpacing, unitID, conBuildDist, nil, nil, nil, true)
+                            if tx then
+                                claimRadius = cSpacing * 0.5
+                                st.activeEnergyBuilders = st.activeEnergyBuilders + 1
+                                -- one wind at a time during opening, NO row spam
                             end
                         end
-                    elseif (st.mexUnitCount or 0) < 1 then
-                        local busy = E.IsUnitBuildingUnit(unitID)
+                    elseif openingMex < 1 then
                         local cmdMex, cmdMexCost = nil, mHuge
-                        if not busy then
-                            for i = #cache.mex, 1, -1 do
-                                local cost = UnitDefs[cache.mex[i]] and UnitDefs[cache.mex[i]].metalCost or mHuge
-                                if cost < cmdMexCost then cmdMexCost, cmdMex = cost, cache.mex[i] end
-                            end
+                        for i = #cache.mex, 1, -1 do
+                            local cost = UnitDefs[cache.mex[i]] and UnitDefs[cache.mex[i]].metalCost or mHuge
+                            if cost < cmdMexCost then cmdMexCost, cmdMex = cost, cache.mex[i] end
                         end
-                        if not busy and cmdMex and st.unclaimedMexCount > 0 and B.CanAffordBuild(cmdMex, true) then
+                        if cmdMex and st.unclaimedMexCount > 0 and B.CanAffordBuild(cmdMex, true) then
                             defID = cmdMex
                             tx, ty, tz, facing, key = B.FindBuildSpot(ux, uz, defID, st.metalMapMexSpacing, unitID, conBuildDist, nil, nil, nil, true)
                             if tx then
