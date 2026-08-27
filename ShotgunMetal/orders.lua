@@ -1039,58 +1039,6 @@ local function ProcessUnitOrders(unitID, frame)
             return
         end
 
-        local noFactoryYet = (st.myFactoriesCount or 0) == 0 and (st.pendingFactoryBlueprints or 0) == 0
-        local emergencyType = (not noFactoryYet and (not E.IsUnitBuildingFactory(unitID))) and E.CheckEmergencyEconomy(unitID) or nil
-        if emergencyType then
-            if frame % 15 == 0 then
-                Spring.Echo(string.format("[EMR] f=%d isCmd=%s emType=%s", frame, tostring(U.IsCommander(uDefID)), tostring(emergencyType)))
-            end
-            local cache = B.GetBuildCache(uDefID)
-            local emergencyDef, eSpacing = nil, cfg.MIN_SPACING
-
-            if emergencyType == "energy" then
-                if hasWind and #cache.energyWind > 0 then emergencyDef = cache.energyWind[1] eSpacing = 64
-                elseif #cache.energySolar > 0 then emergencyDef = cache.energySolar[1] eSpacing = 64 end
-            else
-                if #cache.mex > 0 then
-                    local cheapestMex, cheapestCost = nil, mHuge
-                    for i = #cache.mex, 1, -1 do
-                        local cost = UnitDefs[cache.mex[i]] and UnitDefs[cache.mex[i]].metalCost or mHuge
-                        if cost < cheapestCost then cheapestCost, cheapestMex = cost, cache.mex[i] end
-                    end
-                    emergencyDef = cheapestMex
-                    eSpacing = st.metalMapMexSpacing
-                end
-            end
-
-            if emergencyDef and B.CanAffordBuild(emergencyDef, true) then
-                local tx, ty, tz, facing, key
-                tx, ty, tz, facing, key = B.FindBuildSpot(ux, uz, emergencyDef, eSpacing, unitID, conBuildDist, nil, nil, nil, true)
-
-                if tx then
-                    spGiveOrderToUnit(unitID, CMD_STOP, {}, {})
-                    local claimRadius = eSpacing * 0.5
-                    if emergencyType == "metal" then claimRadius = st.metalMapMexSpacing * 0.5 end
-                    local isMex = UnitDefs[emergencyDef] and UnitDefs[emergencyDef].extractsMetal and UnitDefs[emergencyDef].extractsMetal > 0
-                    st.claimedSpots[key] = { frame = frame, x = tx, z = tz, r2 = claimRadius * claimRadius, isFactory = false, isAirFactory = false, facing = facing, defID = emergencyDef, isMex = isMex }
-                    st.pendingCommittedMetal = st.pendingCommittedMetal + (UnitDefs[emergencyDef] and UnitDefs[emergencyDef].metalCost or 0)
-                    spGiveOrderToUnit(unitID, -emergencyDef, { tx, ty, tz, facing }, {})
-                    return
-                end
-            else
-                local buildDist = uDef.buildDistance or 200
-                local reclaimTarget = W.FindReclaimTarget(ux, uz, true, buildDist)
-                if reclaimTarget then
-                    local currentCmds = spGetUnitCommands(unitID, 1)
-                    if not currentCmds or #currentCmds == 0 or currentCmds[1].id ~= cfg.CMD_RECLAIM then
-                        spGiveOrderToUnit(unitID, CMD_STOP, {}, {})
-                        spGiveOrderToUnit(unitID, cfg.CMD_RECLAIM, { reclaimTarget + (Game and Game.maxUnits or 32768) }, {})
-                        return
-                    end
-                end
-            end
-        end
-
         if (not E.IsUnitBuildingFactory(unitID)) and NeedsOrders(unitID, false, false, false) then
             local cache = B.GetBuildCache(uDefID)
             local tx, ty, tz, facing, key, defID
@@ -1796,7 +1744,7 @@ local function ProcessUnitOrders(unitID, frame)
                 local isAntinuke = cfg.IsAntiNukeDef(defID)
                 if frame % 1 == 0 then
                     local dN = (UnitDefs[defID] and UnitDefs[defID].name) or "?"
-                    local eN = (UnitDefs[emergencyDef] and UnitDefs[emergencyDef].name) or "-"
+                    local eN = "-"
                     local tag = "?"
                     if st.myFactoriesCount == 0 and st.pendingFactoryBlueprints == 0 then tag = "OPEN" end
                     Spring.Echo(string.format("[BUILD] f=%d isCmd=%s def=%s emType=%s tag=%s row=%s mexCl=%s", frame, tostring(U.IsCommander(uDefID)), dN, tostring(eN), tag, tostring(rowBuild), tostring(mexCluster)))
