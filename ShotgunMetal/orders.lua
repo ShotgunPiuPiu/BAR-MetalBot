@@ -1208,6 +1208,9 @@ local function ProcessUnitOrders(unitID, frame)
             if st.myFactoriesCount == 0 and (not E.IsUnitBuildingFactory(unitID)) and #cache.factories > 0
                 and (st.mexUnitCount or 0) >= 1 and (st.ecoEnergyCount or 0) >= 4 then
                 local starterFactory = cache.factories[1] or B.GetCheapestBotFactory(cache)
+                if frame % 20 == 0 then
+                    Spring.Echo(string.format("[LAB] f=%d nF=%d nFF=%d mex=%d eco=%d openingWind=%d openingMex=%d factories[#]=%d", frame, st.myFactoriesCount or 0, st.pendingFactoryBlueprints or 0, st.mexUnitCount or 0, st.ecoEnergyCount or 0, st.openingWind or 0, st.openingMex or 0, #cache.factories))
+                end
                 if B.CanAffordBuild(starterFactory, true) then
                     defID = starterFactory
                     -- We want to place the first lab within
@@ -1232,6 +1235,9 @@ local function ProcessUnitOrders(unitID, frame)
             -- is being built — those cons are on the factory rather than eco.)
             if not tx and (not E.IsUnitBuildingFactory(unitID)) and (st.myFactoriesCount > 0 or st.pendingFactoryBlueprints > 0)
                 and (isAdvCon or U.IsCommander(uDefID) or (st.advConCount or 0) == 0) then
+                if frame % 20 == 0 and U.IsCommander(uDefID) then
+                    Spring.Echo(string.format("[ECO-cmd] f=%d nF=%d pF=%d needE=%s", frame, st.myFactoriesCount or 0, st.pendingFactoryBlueprints or 0, tostring(st.energyStalling)))
+                end
                 local overflowingEnergy = (st.currentEnergyStorage > 0) and (st.currentEnergy > st.currentEnergyStorage * 0.85)
                 local targetEnergy = mMax(st.energyPull * 1.15, mMin(st.metalIncome * 20, mMax(st.energyPull * 2, 600)), 100)
                 local overflowingMetal = (st.currentMetalStorage > 0) and (st.currentMetal > st.currentMetalStorage * 0.85)
