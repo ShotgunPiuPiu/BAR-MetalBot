@@ -350,14 +350,17 @@ local function ProcessUnitOrders(unitID, frame)
                 and not st.metalStalling
 
             -- Unit rush: opening forces a few constructors, then factories
-            -- flood combat units. Cons only trickle in afterwards to reach
-            -- the post-opening crew target (and during metal crises).
-            local conTarget = mMax(cfg.MIN_CONS_BEFORE_UNITS, math.floor((st.myFactoriesCount * cfg.CONS_PER_FACTORY_POST + cfg.CONS_BASE_POST) / agg))
+            -- flood combat units. Cons keep trickling in to (a) reach the
+            -- post-opening crew target and (b) fuel continuous eco growth.
+            local conTarget = mMax(cfg.MIN_CONS_BEFORE_UNITS, cfg.CONS_BASE_POST + math.floor((st.myFactoriesCount * cfg.CONS_PER_FACTORY_POST) / agg))
             local wantCons = false
             if realConBots < cfg.MIN_CONS_BEFORE_UNITS then wantCons = true
-            elseif st.metalStalling and (st.unclaimedMexCount or 0) > 0 and realConBots < conTarget then wantCons = math.random() < mMin(1, 0.3 / agg)
+            elseif st.metalStalling and (st.unclaimedMexCount or 0) > 0 and realConBots < conTarget then wantCons = math.random() < mMin(1, 0.4 / agg)
             elseif realConBots < conTarget then wantCons = math.random() < mMin(1, cfg.CONS_ORDER_CHANCE / agg)
-            else wantCons = math.random() < mMin(1, 0.05 / agg) end
+            -- keep the workforce growing so eco development never stalls:
+            -- while there are unclaimed spots, keep issuing constructors
+            elseif (st.unclaimedMexCount or 0) > 0 and realConBots < conTarget + 3 then wantCons = math.random() < mMin(1, 0.35 / agg)
+            else wantCons = math.random() < mMin(1, 0.08 / agg) end
 
             if not choice and (wantCons or needAdvancedCon) and #cache.cons > 0 then
                 local useAdvanced = false
@@ -1223,17 +1226,27 @@ local function ProcessUnitOrders(unitID, frame)
                 end
             end
 
-            -- T2 economy focus: while advanced constructors exist, T1 workers
-            -- stop claiming NEW eco and only assist/guard/reclaim instead
-            if not tx and (not E.IsUnitBuildingFactory(unitID)) and (st.myFactoriesCount > 0 or st.pendingFactoryBlueprints > 0) and not st.economySaturated
+            -- Continuous eco growth: T1 workers keep claiming NEW eco whenever
+            -- there are free spots, regardless of saturation, so the economy
+            -- develops without interruption. (Only paused while a lab itself
+            -- is being built — those cons are on the factory rather than eco.)
+            if not tx and (not E.IsUnitBuildingFactory(unitID)) and (st.myFactoriesCount > 0 or st.pendingFactoryBlueprints > 0)
                 and (isAdvCon or uDef.isCommander or (st.advConCount or 0) == 0) then
                 local overflowingEnergy = (st.currentEnergyStorage > 0) and (st.currentEnergy > st.currentEnergyStorage * 0.85)
                 local targetEnergy = mMax(st.energyPull * 1.15, mMin(st.metalIncome * 20, mMax(st.energyPull * 2, 600)), 100)
                 local overflowingMetal = (st.currentMetalStorage > 0) and (st.currentMetal > st.currentMetalStorage * 0.85)
                 local metalDeficit = mMax(0, (st.metalPull or 0) - (st.metalIncome or 0))
                 local energyDeficit = mMax(0, (st.energyPull or 0) - (st.energyIncome or 0))
-                local mexBudget = mMax(1, mMin(math.ceil(metalDeficit / cfg.GetMexGain()), mMax(1, st.unclaimedMexCount or 0))) * cfg.ECO_BUILDER_AGGRESSION
-                local energyBudget = mMax(1, math.ceil(energyDeficit / cfg.GetEnergyGain())) * cfg.ECO_BUILDER_AGGRESSION
+                -- Continuous growth: keep a small crew on eco even with no
+                -- deficit, so the economy keeps developing while spots remain.
+                local mexBudget = mMax(1, mMin(math.ceil(metalDeficit / mMax(1, cfg.GetMexGain())), mMax(1, st.unclaimedMexCount or 0))) * cfg.ECO_BUILDER_AGGRESSION
+                local energyBudget = mMax(1, math.ceil(energyDeficit / mMax(1, cfg.GetEnergyGain()))) * cfg.ECO_BUILDER_AGGRESSION
+                if st.unclaimedMexCount > 0 and metalDeficit == 0 and not overflowingMetal then
+                    mexBudget = mMax(mexBudget, cfg.ECO_BUILDER_AGGRESSION)
+                end
+                if not overflowingEnergy then
+                    energyBudget = mMax(energyBudget, 1)
+                end
 
                 local needMetal = (st.metalStalling or st.unclaimedMexCount > 0) and not overflowingMetal
                 local needEnergy = st.energyStalling or ((st.energyIncome < targetEnergy) and not overflowingEnergy)

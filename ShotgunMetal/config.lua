@@ -44,9 +44,9 @@ local cfg = {
     MEX_CLUSTER_RADIUS_SQ = 102400, -- grab extra mex spots within this radius (squared elmos) in one trip (=320^2)
     MIN_CONS_BEFORE_UNITS = 2,      -- first factory MUST make this many constructors before any units
     UNIT_RUSH_FRAME       = 4500,   -- (~2.5 min) from here factories prioritize combat units hard
-    CONS_PER_FACTORY_POST = 3,      -- post-opening constructor trickle target per lab
-    CONS_BASE_POST        = 4,      -- ...plus this flat amount
-    CONS_ORDER_CHANCE     = 0.5,    -- chance a factory picks a con while below the trickle target
+    CONS_PER_FACTORY_POST = 4,      -- post-opening constructor trickle target per lab
+    CONS_BASE_POST        = 7,      -- ...plus this flat amount (keep a solid eco workforce)
+    CONS_ORDER_CHANCE     = 0.7,    -- chance a factory picks a con while below the trickle target
     ROWS_MIN_MEX          = 3,      -- long eco strips need at least this many built mexes...
     ROWS_MIN_WIND         = 10,     -- ...and this many wind/solar buildings before they unlock
     ARTILLERY_SUPPORT_CHANCE = 0.12, -- post-throttle chance a factory queues artillery as support
