@@ -1731,21 +1731,33 @@ local function ProcessUnitOrders(unitID, frame)
                         end
                     end
                 else
-                    local cmdMex, cmdMexCost = nil, mHuge
-                    for i = #cache.mex, 1, -1 do
-                        local cost = UnitDefs[cache.mex[i]] and UnitDefs[cache.mex[i]].metalCost or mHuge
-                        if cost < cmdMexCost then cmdMexCost, cmdMex = cost, cache.mex[i] end
-                    end
-                    if cmdMex and st.unclaimedMexCount > 0 and B.CanAffordBuild(cmdMex, true) then
-                        defID = cmdMex
-                        tx, ty, tz, facing, key = B.FindBuildSpot(ux, uz, defID, st.metalMapMexSpacing, unitID, conBuildDist, nil, nil, nil, true)
-                        if tx then
-                            claimRadius = st.metalMapMexSpacing * 0.5
-                            st.activeMexBuilders = st.activeMexBuilders + 1
-                            mexCluster = true
+                    -- Post-first-factory eco rush: alternate a compact 2x4 row
+                    -- (up to 4 wind + up to 4 mex), one at a time, so BOTH resource
+                    -- incomes come online fast instead of a long line of one type.
+                    local windWant = (st.openingWind or 0) < 4
+                    local mexWant = (st.openingMex or 0) < 4
+                    local wantMex = mexWant and ((st.openingWind or 0) <= (st.openingMex or 0))
+                    local wantWind = windWant and not wantMex
+                    if wantMex then
+                        local cmdMex, cmdMexCost = nil, mHuge
+                        for i = #cache.mex, 1, -1 do
+                            local cost = UnitDefs[cache.mex[i]] and UnitDefs[cache.mex[i]].metalCost or mHuge
+                            if cost < cmdMexCost then cmdMexCost, cmdMex = cost, cache.mex[i] end
+                        end
+                        if cmdMex and B.CanAffordBuild(cmdMex, true) then
+                            defID = cmdMex
+                            tx, ty, tz, facing, key = B.FindBuildSpot(ux, uz, defID, st.metalMapMexSpacing, unitID, conBuildDist, nil, nil, nil, true)
+                            if tx then
+                                claimRadius = st.metalMapMexSpacing * 0.5
+                                st.activeMexBuilders = st.activeMexBuilders + 1
+                                st.openingMex = (st.openingMex or 0) + 1
+                                mexCluster = true
+                            else
+                                Spring.Echo(string.format("[OPEN-M-nospot2] f=%d", frame))
+                            end
                         end
                     end
-                    if not tx then
+                    if not tx and wantWind then
                         local cID = nil
                         for i = 1, #cache.energyAdv do
                             local aN = UnitDefs[cache.energyAdv[i]] and sLower(UnitDefs[cache.energyAdv[i]].name or "") or ""
@@ -1765,9 +1777,38 @@ local function ProcessUnitOrders(unitID, frame)
                             local cSpacing = (cCost > 4000) and 192 or cfg.OPENING_WIND_SPACING
                             local cAx, cAz = clampAnchor(ux, uz)
                             tx, ty, tz, facing, key = B.FindBuildSpot(cAx, cAz, defID, cSpacing, unitID, conBuildDist, nil, nil, nil, true)
-
-                        if tx then
-                            claimRadius = cSpacing * 0.5                                st.activeEnergyBuilders = st.activeEnergyBuilders + 1
+                            if tx then
+                                claimRadius = cSpacing * 0.5
+                                st.activeEnergyBuilders = st.activeEnergyBuilders + 1
+                                st.openingWind = (st.openingWind or 0) + 1
+                                rowBuild = true
+                            end
+                        end
+                    end
+                    -- after the 2x4 row is done, commander falls back to advanced energy
+                    if not tx and not windWant and not mexWant then
+                        local cID = nil
+                        for i = 1, #cache.energyAdv do
+                            local aN = UnitDefs[cache.energyAdv[i]] and sLower(UnitDefs[cache.energyAdv[i]].name or "") or ""
+                            if sFind(aN, "fusion") or sFind(aN, "afus") then
+                                if st.afusLocked or B.CanAffordBuild(cache.energyAdv[i], false) then
+                                    cID = cache.energyAdv[i]
+                                    afusRow = true
+                                    st.afusLocked = true
+                                end
+                                break
+                            end
+                        end
+                        if not cID and not st.afusLocked then cID = (hasWind and #cache.energyWind > 0) and cache.energyWind[1] or (#cache.energySolar > 0 and cache.energySolar[1] or nil) end
+                        if cID and B.CanAffordBuild(cID, true) then
+                            defID = cID
+                            local cCost = UnitDefs[cID].metalCost or 0
+                            local cSpacing = (cCost > 4000) and 192 or cfg.OPENING_WIND_SPACING
+                            local cAx, cAz = clampAnchor(ux, uz)
+                            tx, ty, tz, facing, key = B.FindBuildSpot(cAx, cAz, defID, cSpacing, unitID, conBuildDist, nil, nil, nil, true)
+                            if tx then
+                                claimRadius = cSpacing * 0.5
+                                st.activeEnergyBuilders = st.activeEnergyBuilders + 1
                                 rowBuild = true
                             end
                         end
