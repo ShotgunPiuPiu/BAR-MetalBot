@@ -658,6 +658,10 @@ function E.UpdateMacroState(myTeam, units)
         end
     end
 
+    if st.frameNum % 30 == 0 then
+        Spring.Echo(string.format("[SCAN] f=%d units=%d cons=%d mex=%d eco=%d fac=%d", st.frameNum, #(units or {}), st.conUnitCount or 0, st.mexUnitCount or 0, st.ecoEnergyCount or 0, st.myFactoriesCount or 0))
+    end
+
     for hk in pairs(st.conTurretHomes) do
         if not seenHomeKeys[hk] then st.conTurretHomes[hk] = nil end
     end
